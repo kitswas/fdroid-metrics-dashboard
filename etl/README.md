@@ -55,18 +55,18 @@ and enable `Format on Save` for a better experience.
 To fix imports:
 
 ```bash
-uv run ruff check --select I --fix src # Sort imports
-uv run ruff check --select F401 --fix src # Remove unused imports
+uv run ruff check --select I --fix # Sort imports
+uv run ruff check --select F401 --fix # Remove unused imports
 ```
 
 To check for linting errors:
 
 ```bash
-uv run ruff check src # Use --fix to fix the errors
+uv run ruff check # Use --fix to fix the errors
 ```
 
 To format the code:
 
 ```bash
-uv run ruff format src
+uv run ruff format
 ```
