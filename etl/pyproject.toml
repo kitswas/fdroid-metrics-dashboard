@@ -1,0 +1,10 @@
+[project]
+name = "python-template"
+version = "0.1.0"
+description = "Process data from F-droid metrics website for analysis"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = ["ruff>=0.11.2"]
