@@ -9,6 +9,7 @@ import streamlit as st
 from plotly.subplots import make_subplots
 
 from etl.analyzer_search import SearchMetricsAnalyzer
+from etl.data_fetcher_ui import show_data_fetcher, show_quick_fetch_buttons
 
 
 def show_search_page():
@@ -27,10 +28,32 @@ def show_search_page():
     # Date selection
     available_dates = analyzer.get_available_dates()
     if not available_dates:
-        st.error(
-            "No search data files found. Please run the search data collection script first."
-        )
-        st.code("python search/getdata.py")
+        st.warning("No search data files found locally.")
+
+        # Show data fetching interface
+        st.info("💡 **Fetch data directly from F-Droid servers:**")
+
+        # Create tabs for fetching and analysis
+        tab_fetch, tab_analysis = st.tabs(["📥 Fetch Data", "📊 Analysis"])
+
+        with tab_fetch:
+            # Show data fetching interface
+            data_fetched = show_data_fetcher("search", "search_")
+
+            # Show quick fetch buttons
+            if not data_fetched:
+                data_fetched = show_quick_fetch_buttons("search", "search_")
+
+            if data_fetched:
+                st.success(
+                    "✅ Data fetched successfully! Switch to the Analysis tab or refresh the page."
+                )
+                if st.button("🔄 Refresh Page", key="search_refresh"):
+                    st.rerun()
+
+        with tab_analysis:
+            st.info("Please fetch data first using the 'Fetch Data' tab.")
+
         return
 
     st.sidebar.subheader("Date Range")
@@ -59,6 +82,24 @@ def show_search_page():
     else:
         selected_dates = available_dates
         st.sidebar.info(f"Only one date available: {available_dates[0]}")
+
+    # Add data fetching option in sidebar
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("📥 Fetch More Data")
+    if st.sidebar.button("🔽 Fetch Additional Data", key="search_sidebar_fetch"):
+        st.session_state.show_search_fetch = True
+
+    # Show data fetching interface if requested
+    if st.session_state.get("show_search_fetch", False):
+        with st.expander("📥 Fetch Additional Search Data", expanded=True):
+            data_fetched = show_data_fetcher("search", "search_sidebar_")
+            if data_fetched:
+                st.success(
+                    "✅ Data fetched successfully! Refresh the page to see new data."
+                )
+                if st.button("🔄 Refresh Page", key="search_sidebar_refresh"):
+                    st.session_state.show_search_fetch = False
+                    st.rerun()
 
     # Main content tabs
     tab1, tab2, tab3, tab4 = st.tabs(

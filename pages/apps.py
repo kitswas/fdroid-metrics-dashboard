@@ -10,6 +10,7 @@ from plotly.subplots import make_subplots
 
 from etl.analyzer_apps import AppMetricsAnalyzer
 from etl.fdroid_metadata import FDroidMetadataFetcher
+from etl.data_fetcher_ui import show_data_fetcher, show_quick_fetch_buttons
 
 
 def show_apps_page():
@@ -28,10 +29,32 @@ def show_apps_page():
     # Date selection
     available_dates = analyzer.get_available_dates()
     if not available_dates:
-        st.error(
-            "No app data files found. Please run the app data collection script first."
-        )
-        st.code("python search/getappsdata.py")
+        st.warning("No app data files found locally.")
+
+        # Show data fetching interface
+        st.info("💡 **Fetch data directly from F-Droid servers:**")
+
+        # Create tabs for fetching and analysis
+        tab_fetch, tab_analysis = st.tabs(["📥 Fetch Data", "📊 Analysis"])
+
+        with tab_fetch:
+            # Show data fetching interface
+            data_fetched = show_data_fetcher("apps", "apps_")
+
+            # Show quick fetch buttons
+            if not data_fetched:
+                data_fetched = show_quick_fetch_buttons("apps", "apps_")
+
+            if data_fetched:
+                st.success(
+                    "✅ Data fetched successfully! Switch to the Analysis tab or refresh the page."
+                )
+                if st.button("🔄 Refresh Page", key="apps_refresh"):
+                    st.rerun()
+
+        with tab_analysis:
+            st.info("Please fetch data first using the 'Fetch Data' tab.")
+
         return
 
     st.sidebar.subheader("Date Range")
@@ -60,6 +83,24 @@ def show_apps_page():
     else:
         selected_dates = available_dates
         st.sidebar.info(f"Only one date available: {available_dates[0]}")
+
+    # Add data fetching option in sidebar
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("📥 Fetch More Data")
+    if st.sidebar.button("🔽 Fetch Additional Data", key="apps_sidebar_fetch"):
+        st.session_state.show_apps_fetch = True
+
+    # Show data fetching interface if requested
+    if st.session_state.get("show_apps_fetch", False):
+        with st.expander("📥 Fetch Additional App Data", expanded=True):
+            data_fetched = show_data_fetcher("apps", "apps_sidebar_")
+            if data_fetched:
+                st.success(
+                    "✅ Data fetched successfully! Refresh the page to see new data."
+                )
+                if st.button("🔄 Refresh Page", key="apps_sidebar_refresh"):
+                    st.session_state.show_apps_fetch = False
+                    st.rerun()
 
     # Main content tabs
     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
