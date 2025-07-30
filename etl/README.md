@@ -1,7 +1,7 @@
-# python-template
+# F-Droid Metrics ETL
 
-A template for Python projects.  
-Includes basic project structure, a test suite, a code formatter and linter, and a dependency manager.
+Extract, Transform, and Load F-Droid metrics data for analysis.  
+Includes data collection tools and an interactive dashboard for visualization.
 
 ## How to use
 
@@ -22,29 +22,43 @@ source .venv/bin/activate # Linux/MacOS
 uv sync --link-mode=symlink # Install the dependencies, use -U to update
 ```
 
-You can add other dependencies use `uv add`. The following example adds a valid kernel for Jupyter notebooks in VSCode.
+## Data Collection
+
+Download F-Droid search metrics data:
 
 ```bash
-uv add ipykernel # Similar to pip install ipykernel
+# Download current month's data
+uv run python search/getdata.py
+
+# Download specific month
+uv run python search/getdata.py 2024 6
+
+# Download specific year and month
+uv run python search/getdata.py 2024 12
 ```
 
-To run any script, append `uv run` before the `python` command. (If the environment is inactive)
+## Dashboard
+
+Launch the interactive dashboard to analyze the collected data:
 
 ```bash
-uv run python src/hello.py
+uv run streamlit run dashboard.py
 ```
 
-Run tests:
+The dashboard will be available at `http://localhost:8501` and includes:
 
-```bash
-uv run python -m unittest discover
-```
+- **Overview**: High-level metrics and trends
+- **Search Queries**: Detailed analysis of search patterns
+- **Geographic**: Usage by country and region
+- **Technical**: Error rates and request path analysis
 
-Get rid of temporary files: (Use with caution)
+## Features
 
-```bash
-git clean -fdX -n # Remove the -n flag to actually delete the files
-```
+- 📊 Interactive charts and visualizations
+- 🔍 Search query popularity analysis
+- 🌍 Geographic usage patterns
+- 📈 Time series analysis
+- 🛠️ Technical metrics and error tracking
 
 ## Code Formatting and Linting
 
