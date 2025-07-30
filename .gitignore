@@ -209,6 +209,9 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
+# F-Droid metadata cache
+cache/
+
 # Downloaded data files
 etl/raw/
 downloads/

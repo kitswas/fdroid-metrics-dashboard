@@ -9,6 +9,7 @@ import streamlit as st
 from plotly.subplots import make_subplots
 
 from etl.analyzer_apps import AppMetricsAnalyzer
+from etl.fdroid_metadata import FDroidMetadataFetcher
 
 
 def show_apps_page():
@@ -375,58 +376,51 @@ def show_package_analysis(analyzer: AppMetricsAnalyzer, dates: list):
         # Package categories analysis
         st.subheader("Package Categories")
 
+        # Initialize metadata fetcher with caching
+        @st.cache_resource
+        def get_metadata_fetcher():
+            """Get a cached instance of the metadata fetcher."""
+            return FDroidMetadataFetcher(cache_dir="./cache/metadata")
+
+        metadata_fetcher = get_metadata_fetcher()
+
+        # Show cache statistics
+        cache_stats = metadata_fetcher.get_cache_stats()
+        if st.checkbox("Show metadata cache info", value=False):
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Cached Packages", cache_stats["cached_packages"])
+            with col2:
+                st.metric("Memory Cache", cache_stats["memory_cache_size"])
+            with col3:
+                st.metric("Cache Size (MB)", cache_stats["cache_dir_size_mb"])
+
+            if st.button("Clear Metadata Cache"):
+                metadata_fetcher.clear_cache()
+                st.success("Cache cleared!")
+                st.rerun()
+
         def categorize_package(package_name):
-            """Categorize packages based on their name patterns."""
-            package_lower = package_name.lower()
+            """Get the real F-Droid category for a package, with fallback to pattern-based categorization."""
+            return metadata_fetcher.get_primary_category(package_name)
 
-            if any(word in package_lower for word in ["fdroid", "f-droid"]):
-                return "F-Droid Core"
-            elif any(word in package_lower for word in ["newpipe", "tube", "youtube"]):
-                return "Media/Video"
-            elif any(
-                word in package_lower
-                for word in [
-                    "telegram",
-                    "chat",
-                    "message",
-                    "signal",
-                    "element",
-                    "matrix",
-                ]
-            ):
-                return "Communication"
-            elif any(word in package_lower for word in ["launcher", "home", "desktop"]):
-                return "Launchers"
-            elif any(
-                word in package_lower
-                for word in ["gallery", "photo", "image", "camera"]
-            ):
-                return "Photography"
-            elif any(
-                word in package_lower for word in ["music", "audio", "player", "sound"]
-            ):
-                return "Music/Audio"
-            elif any(
-                word in package_lower
-                for word in ["calculator", "calendar", "note", "task", "todo"]
-            ):
-                return "Productivity"
-            elif any(word in package_lower for word in ["game", "puzzle", "play"]):
-                return "Games"
-            elif any(
-                word in package_lower
-                for word in ["browser", "web", "firefox", "chrome"]
-            ):
-                return "Browsers"
-            elif any(word in package_lower for word in ["keyboard", "input"]):
-                return "Input Methods"
-            elif "org." in package_name or "com." in package_name:
-                domain = package_name.split(".")[1] if "." in package_name else ""
-                return f"Domain: {domain}" if domain else "Other"
-            else:
-                return "Other"
+        # Show progress while fetching metadata
+        progress_text = f"Fetching F-Droid metadata for {len(filtered_df)} packages..."
+        progress_bar = st.progress(0, text=progress_text)
 
-        filtered_df["category"] = filtered_df["package_name"].apply(categorize_package)
+        categories = []
+        for i, package_name in enumerate(filtered_df["package_name"]):
+            category = categorize_package(package_name)
+            categories.append(category)
+
+            # Update progress
+            progress = (i + 1) / len(filtered_df)
+            progress_bar.progress(
+                progress, text=f"{progress_text} ({i + 1}/{len(filtered_df)})"
+            )
+
+        filtered_df["category"] = categories
+        progress_bar.empty()  # Clear progress bar
         category_stats = (
             filtered_df.groupby("category")["total_hits"].sum().reset_index()
         )

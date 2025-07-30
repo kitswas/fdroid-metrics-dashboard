@@ -9,6 +9,7 @@ dependencies = [
     "pandas>=2.0.0",
     "plotly>=5.0.0",
     "streamlit>=1.28.0",
+    "pyyaml>=6.0.0",
 ]
 
 [dependency-groups]
