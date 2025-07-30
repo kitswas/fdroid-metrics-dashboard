@@ -89,12 +89,26 @@ class SearchMetricsAnalyzer:
                     }
                 )
             except FileNotFoundError:
+                # Skip missing data files
+                continue
+            except Exception as e:
+                # Log unexpected errors but continue processing
+                print(f"Warning: Error processing date {date}: {e}")
                 continue
 
         return pd.DataFrame(records).sort_values("date")
 
     def get_query_analysis(self, dates: Optional[List[str]] = None) -> pd.DataFrame:
-        """Analyze search queries across multiple dates."""
+        """
+        Analyze search queries across multiple dates.
+
+        Returns a DataFrame with columns:
+        - query: The search query text
+        - total_hits: Total hits across all dates
+        - appearances: Number of weeks where the query had hits > 0
+        - avg_hits: Average hits per active week
+        - dates: List of dates where the query was active
+        """
         if dates is None:
             dates = self.get_available_dates()
 
@@ -121,10 +135,17 @@ class SearchMetricsAnalyzer:
                         else query_data
                     )
                     all_queries[query]["total_hits"] += hits
-                    all_queries[query]["appearances"] += 1
-                    all_queries[query]["dates"].append(date)
+                    # Only count as an appearance if there were actual hits
+                    if hits > 0:
+                        all_queries[query]["appearances"] += 1
+                        all_queries[query]["dates"].append(date)
 
             except FileNotFoundError:
+                # Skip missing data files
+                continue
+            except Exception as e:
+                # Log unexpected errors but continue processing
+                print(f"Warning: Error processing date {date}: {e}")
                 continue
 
         # Calculate averages
@@ -139,7 +160,15 @@ class SearchMetricsAnalyzer:
         return df.sort_values("total_hits", ascending=False)
 
     def get_country_analysis(self, dates: Optional[List[str]] = None) -> pd.DataFrame:
-        """Analyze hits by country across multiple dates."""
+        """
+        Analyze hits by country across multiple dates.
+
+        Returns a DataFrame with columns:
+        - country: The country code
+        - total_hits: Total hits across all dates
+        - appearances: Number of weeks where the country had hits > 0
+        - avg_hits: Average hits per active week
+        """
         if dates is None:
             dates = self.get_available_dates()
 
@@ -160,9 +189,16 @@ class SearchMetricsAnalyzer:
                         }
 
                     country_data[country]["total_hits"] += hits
-                    country_data[country]["appearances"] += 1
+                    # Only count as an appearance if there were actual hits
+                    if hits > 0:
+                        country_data[country]["appearances"] += 1
 
             except FileNotFoundError:
+                # Skip missing data files
+                continue
+            except Exception as e:
+                # Log unexpected errors but continue processing
+                print(f"Warning: Error processing date {date}: {e}")
                 continue
 
         # Calculate averages

@@ -197,13 +197,27 @@ class AppMetricsAnalyzer:
                         "unique_paths": summary["unique_paths"],
                     }
                 )
-            except Exception:
+            except FileNotFoundError:
+                # Skip missing data files
+                continue
+            except Exception as e:
+                # Log unexpected errors but continue processing
+                print(f"Warning: Error processing date {date}: {e}")
                 continue
 
         return pd.DataFrame(records).sort_values("date")
 
     def get_path_analysis(self, dates: Optional[List[str]] = None) -> pd.DataFrame:
-        """Analyze request paths across multiple dates."""
+        """
+        Analyze request paths across multiple dates.
+
+        Returns a DataFrame with columns:
+        - path: The request path
+        - total_hits: Total hits across all dates
+        - appearances: Number of weeks where the path had hits > 0
+        - avg_hits: Average hits per active week
+        - dates: List of dates where the path was active
+        """
         if dates is None:
             dates = self.get_available_dates()
 
@@ -230,10 +244,17 @@ class AppMetricsAnalyzer:
                         else path_data
                     )
                     all_paths[path]["total_hits"] += hits
-                    all_paths[path]["appearances"] += 1
-                    all_paths[path]["dates"].append(date)
+                    # Only count as an appearance if there were actual hits
+                    if hits > 0:
+                        all_paths[path]["appearances"] += 1
+                        all_paths[path]["dates"].append(date)
 
-            except Exception:
+            except FileNotFoundError:
+                # Skip missing data files
+                continue
+            except Exception as e:
+                # Log unexpected errors but continue processing
+                print(f"Warning: Error processing date {date}: {e}")
                 continue
 
         # Calculate averages
@@ -248,7 +269,15 @@ class AppMetricsAnalyzer:
         return df.sort_values("total_hits", ascending=False)
 
     def get_country_analysis(self, dates: Optional[List[str]] = None) -> pd.DataFrame:
-        """Analyze hits by country across multiple dates."""
+        """
+        Analyze hits by country across multiple dates.
+
+        Returns a DataFrame with columns:
+        - country: The country code
+        - total_hits: Total hits across all dates
+        - appearances: Number of weeks where the country had hits > 0
+        - avg_hits: Average hits per active week
+        """
         if dates is None:
             dates = self.get_available_dates()
 
@@ -269,9 +298,16 @@ class AppMetricsAnalyzer:
                         }
 
                     country_data[country]["total_hits"] += hits
-                    country_data[country]["appearances"] += 1
+                    # Only count as an appearance if there were actual hits
+                    if hits > 0:
+                        country_data[country]["appearances"] += 1
 
-            except Exception:
+            except FileNotFoundError:
+                # Skip missing data files
+                continue
+            except Exception as e:
+                # Log unexpected errors but continue processing
+                print(f"Warning: Error processing date {date}: {e}")
                 continue
 
         # Calculate averages
@@ -315,7 +351,16 @@ class AppMetricsAnalyzer:
         return pd.DataFrame(server_data)
 
     def get_package_analysis(self, dates: Optional[List[str]] = None) -> pd.DataFrame:
-        """Analyze F-Droid package API requests (/api/v1/packages/)."""
+        """
+        Analyze F-Droid package API requests (/api/v1/packages/).
+
+        Returns a DataFrame with columns:
+        - package_name: The F-Droid package name
+        - total_hits: Total hits across all dates
+        - appearances: Number of weeks where the package had hits > 0
+        - avg_hits: Average hits per active week
+        - dates: List of dates where the package was active
+        """
         if dates is None:
             dates = self.get_available_dates()
 
@@ -347,10 +392,17 @@ class AppMetricsAnalyzer:
                             else path_data
                         )
                         package_data[package_name]["total_hits"] += hits
-                        package_data[package_name]["appearances"] += 1
-                        package_data[package_name]["dates"].append(date)
+                        # Only count as an appearance if there were actual hits
+                        if hits > 0:
+                            package_data[package_name]["appearances"] += 1
+                            package_data[package_name]["dates"].append(date)
 
-            except Exception:
+            except FileNotFoundError:
+                # Skip missing data files
+                continue
+            except Exception as e:
+                # Log unexpected errors but continue processing
+                print(f"Warning: Error processing date {date}: {e}")
                 continue
 
         # Calculate averages

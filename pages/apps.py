@@ -195,9 +195,9 @@ def show_apps_overview(analyzer: AppMetricsAnalyzer, dates: list):
             with col1:
                 st.metric("Total Hits", f"{ts_data['total_hits'].sum():,}")
             with col2:
-                st.metric("Avg Daily Hits", f"{ts_data['total_hits'].mean():.0f}")
+                st.metric("Avg Weekly Hits", f"{ts_data['total_hits'].mean():.0f}")
             with col3:
-                st.metric("Peak Day Hits", f"{ts_data['total_hits'].max():,}")
+                st.metric("Peak Week Hits", f"{ts_data['total_hits'].max():,}")
             with col4:
                 st.metric(
                     "Avg Servers Active", f"{ts_data['servers_active'].mean():.1f}/3"
@@ -208,7 +208,7 @@ def show_apps_overview(analyzer: AppMetricsAnalyzer, dates: list):
                 rows=3,
                 cols=1,
                 subplot_titles=(
-                    "Daily App Hits",
+                    "Weekly App Hits",
                     "Active Servers",
                     "Unique Request Paths",
                 ),
@@ -250,6 +250,9 @@ def show_apps_overview(analyzer: AppMetricsAnalyzer, dates: list):
 def show_path_analysis(analyzer: AppMetricsAnalyzer, dates: list):
     """Show detailed path analysis."""
     st.header("📂 Request Path Analysis")
+    st.info(
+        "📊 **Data Frequency:** The data is collected weekly. 'Weeks Active' indicates the number of weeks where the path had actual requests (hits > 0)."
+    )
 
     path_df = analyzer.get_path_analysis(dates)
 
@@ -361,7 +364,15 @@ def show_path_analysis(analyzer: AppMetricsAnalyzer, dates: list):
             ["path", "total_hits", "appearances", "avg_hits", "category"]
         ].copy()
         display_table_df["avg_hits"] = display_table_df["avg_hits"].round(1)
-        st.dataframe(display_table_df, use_container_width=True)
+        st.dataframe(
+            display_table_df,
+            use_container_width=True,
+            column_config={
+                "appearances": st.column_config.NumberColumn("Weeks Active"),
+                "avg_hits": st.column_config.NumberColumn("Avg Hits/Week"),
+                "total_hits": st.column_config.NumberColumn("Total Hits"),
+            },
+        )
 
 
 def show_package_analysis(analyzer: AppMetricsAnalyzer, dates: list):
@@ -369,6 +380,9 @@ def show_package_analysis(analyzer: AppMetricsAnalyzer, dates: list):
     st.header("📦 F-Droid Package API Analysis")
     st.markdown(
         "Analyze package requests to the F-Droid API (`/api/v1/packages/`) to understand which apps are most accessed."
+    )
+    st.info(
+        "📊 **Data Frequency:** The data is collected weekly. 'Weeks Active' indicates the number of weeks where the package had actual downloads (hits > 0)."
     )
 
     package_df = analyzer.get_package_analysis(dates)
@@ -509,7 +523,7 @@ def show_package_analysis(analyzer: AppMetricsAnalyzer, dates: list):
         # Average hits over time analysis
         if len(dates) > 1:
             st.subheader("Package Popularity Trends")
-            st.markdown("Shows average hits per day for the most popular packages")
+            st.markdown("Shows average hits per week for the most popular packages")
 
             trend_df = filtered_df.head(10)[
                 ["package_name", "avg_hits", "appearances"]
@@ -522,8 +536,8 @@ def show_package_analysis(analyzer: AppMetricsAnalyzer, dates: list):
                 hover_name="package_name",
                 title="Package Consistency vs Popularity",
                 labels={
-                    "appearances": "Days Active",
-                    "avg_hits": "Average Hits per Day",
+                    "appearances": "Weeks Active",
+                    "avg_hits": "Average Hits per Week",
                 },
             )
             st.plotly_chart(fig, use_container_width=True)
@@ -538,8 +552,8 @@ def show_package_analysis(analyzer: AppMetricsAnalyzer, dates: list):
             columns={
                 "package_name": "Package Name",
                 "total_hits": "Total Hits",
-                "appearances": "Days Active",
-                "avg_hits": "Avg Hits/Day",
+                "appearances": "Weeks Active",
+                "avg_hits": "Avg Hits/Week",
                 "category": "Category",
             }
         )
@@ -767,7 +781,7 @@ def show_apps_technical_analysis(analyzer: AppMetricsAnalyzer, dates: list):
                 "Server": server,
                 "Total Hits": stats["hits"],
                 "Total Errors": stats["errors"],
-                "Days Active": stats["dates"],
+                "Weeks Active": stats["dates"],
                 "Error Rate (%)": (stats["errors"] / stats["hits"] * 100)
                 if stats["hits"] > 0
                 else 0,

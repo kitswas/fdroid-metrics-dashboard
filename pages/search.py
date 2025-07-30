@@ -177,19 +177,20 @@ def show_search_overview(analyzer: SearchMetricsAnalyzer, dates: list):
             with col1:
                 st.metric("Total Hits", f"{ts_data['total_hits'].sum():,}")
             with col2:
-                st.metric("Avg Daily Hits", f"{ts_data['total_hits'].mean():.0f}")
+                st.metric("Avg Weekly Hits", f"{ts_data['total_hits'].mean():.0f}")
             with col3:
-                st.metric("Peak Day Hits", f"{ts_data['total_hits'].max():,}")
+                st.metric("Peak Week Hits", f"{ts_data['total_hits'].max():,}")
             with col4:
-                st.metric(
-                    "Total Unique Queries", f"{ts_data['unique_queries'].sum():,}"
-                )
+                # Calculate actual total unique queries across all dates
+                query_df = analyzer.get_query_analysis(dates)
+                total_unique_queries = len(query_df) if not query_df.empty else 0
+                st.metric("Total Unique Queries", f"{total_unique_queries:,}")
 
             # Time series charts
             fig = make_subplots(
                 rows=2,
                 cols=1,
-                subplot_titles=("Daily Search Hits", "Daily Unique Search Queries"),
+                subplot_titles=("Weekly Search Hits", "Weekly Unique Search Queries"),
                 vertical_spacing=0.15,
             )
 
@@ -218,6 +219,9 @@ def show_search_overview(analyzer: SearchMetricsAnalyzer, dates: list):
 def show_query_analysis(analyzer: SearchMetricsAnalyzer, dates: list):
     """Show detailed query analysis."""
     st.header("🔍 Search Query Analysis")
+    st.info(
+        "📊 **Data Frequency:** The data is collected weekly. 'Weeks Active' indicates the number of weeks where the query had actual searches (hits > 0)."
+    )
 
     query_df = analyzer.get_query_analysis(dates)
 
@@ -272,7 +276,15 @@ def show_query_analysis(analyzer: SearchMetricsAnalyzer, dates: list):
             ["query", "total_hits", "appearances", "avg_hits"]
         ].copy()
         display_df["avg_hits"] = display_df["avg_hits"].round(1)
-        st.dataframe(display_df, use_container_width=True)
+        st.dataframe(
+            display_df,
+            use_container_width=True,
+            column_config={
+                "appearances": st.column_config.NumberColumn("Weeks Active"),
+                "avg_hits": st.column_config.NumberColumn("Avg Hits/Week"),
+                "total_hits": st.column_config.NumberColumn("Total Hits"),
+            },
+        )
 
 
 def show_search_geographic_analysis(analyzer: SearchMetricsAnalyzer, dates: list):
