@@ -608,7 +608,8 @@ def show_server_comparison(analyzer: AppMetricsAnalyzer, dates: list):
                 else None
             )
             st.metric(
-                "Top Server", top_server["server"] if top_server is not None else "N/A"
+                "Top Server",
+                top_server["server"].item() if top_server is not None else "N/A",
             )
         with col4:
             st.metric(
