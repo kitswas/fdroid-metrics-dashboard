@@ -12,6 +12,7 @@ import requests as re
 BASE_URL = "https://fdroid.gitlab.io/metrics/search.f-droid.org"
 INDEX_URL = f"{BASE_URL}/index.json"
 RAW_DATA_DIR = pathlib.Path(__file__).parent / "raw"
+SUB_DATA_DIR = RAW_DATA_DIR / "search"
 
 
 def fetch_index() -> list[str]:
@@ -49,7 +50,7 @@ def filter_files_for_month(index: list[str], year: int, month: int) -> list[str]
 def download_file(filename: str) -> bool:
     """Download a single data file."""
     url = f"{BASE_URL}/{filename}"
-    filepath = RAW_DATA_DIR / filename
+    filepath = SUB_DATA_DIR / filename
 
     # Check if file already exists
     if filepath.exists():
@@ -73,8 +74,8 @@ def download_file(filename: str) -> bool:
 
 def download_month_data(year: int, month: int) -> None:
     """Download all data files for a specific month."""
-    # Create raw data directory if it doesn't exist
-    RAW_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    # Create data directory if it doesn't exist
+    SUB_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
     # Fetch index
     index = fetch_index()

@@ -1,9 +1,24 @@
-# F-Droid Metrics ETL
+# F-Droid Metrics Dashboard
 
-Extract, Transform, and Load F-Droid metrics data for analysis.  
-Includes data collection tools and an interactive dashboard for visualization.
+A comprehensive dashboard for analyzing F-Droid app store metrics, including search patterns and app download statistics.
 
-## How to use
+## Key Features
+
+### 🔍 Search Metrics
+
+- Search query analysis and trends
+- Geographic distribution of searches
+- Error analysis and technical metrics
+- Time series visualization
+
+### 📱 App Metrics
+
+- App download patterns from HTTP servers
+- Request path analysis (JAR files, repository diffs, etc.)
+- Server performance comparison
+- Geographic distribution of downloads
+
+## Setup Instructions
 
 You need the UV package/project manager to install the dependencies.  
 You can get [UV here](https://docs.astral.sh/uv/getting-started/installation/).
@@ -24,10 +39,12 @@ uv sync --link-mode=symlink # Install the dependencies, use -U to update
 
 ## Data Collection
 
+### Search Metrics Data
+
 Download F-Droid search metrics data:
 
 ```bash
-# Download current month's data
+# Download current month's search data
 uv run python search/getdata.py
 
 # Download specific month
@@ -37,9 +54,24 @@ uv run python search/getdata.py 2024 6
 uv run python search/getdata.py 2024 12
 ```
 
+### App Metrics Data
+
+Download F-Droid app metrics data from HTTP servers:
+
+```bash
+# Download current month's app data
+uv run python search/getappsdata.py
+
+# Download specific month
+uv run python search/getappsdata.py 2024 6
+
+# Download specific year and month
+uv run python search/getappsdata.py 2024 12
+```
+
 ## Dashboard
 
-Launch the interactive dashboard to analyze the collected data:
+Launch the interactive multipage dashboard:
 
 ```bash
 uv run streamlit run dashboard.py
@@ -47,7 +79,20 @@ uv run streamlit run dashboard.py
 
 The dashboard will be available at `http://localhost:8501` and includes:
 
-- **Overview**: High-level metrics and trends
+### 🔍 Search Metrics Dashboard
+
+- **Overview**: High-level search metrics and trends
+- **Search Queries**: Detailed analysis of search patterns  
+- **Geographic**: Geographic distribution of search traffic
+- **Technical**: HTTP errors and request path analysis
+
+### 📱 App Metrics Dashboard
+
+- **Overview**: High-level app download metrics and trends
+- **Request Paths**: Analysis of requested files and paths
+- **Geographic**: Geographic distribution of app downloads
+- **Server Comparison**: Performance comparison across HTTP servers
+- **Technical**: Server reliability and error analysis
 - **Search Queries**: Detailed analysis of search patterns
 - **Geographic**: Usage by country and region
 - **Technical**: Error rates and request path analysis

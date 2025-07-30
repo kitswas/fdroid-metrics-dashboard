@@ -9,21 +9,23 @@ from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 
+from etl.getdata_search import SUB_DATA_DIR as DATA_DIR
+
 
 class SearchMetricsAnalyzer:
     """Analyzer for F-Droid search metrics data."""
 
-    def __init__(self, raw_data_dir: Optional[pathlib.Path] = None):
+    def __init__(self, data_dir: Optional[pathlib.Path] = None):
         """Initialize analyzer with raw data directory."""
-        if raw_data_dir is None:
-            raw_data_dir = pathlib.Path(__file__).parent / "raw"
-        self.raw_data_dir = raw_data_dir
+        if data_dir is None:
+            data_dir = DATA_DIR
+        self.data_dir = data_dir
         self._cache = {}
 
     def get_available_dates(self) -> List[str]:
         """Get list of available data dates."""
         dates = []
-        for file in self.raw_data_dir.glob("*.json"):
+        for file in self.data_dir.glob("*.json"):
             if file.name != "last_submitted_to_cimp.json":
                 try:
                     date_str = file.stem
@@ -39,7 +41,7 @@ class SearchMetricsAnalyzer:
         if date in self._cache:
             return self._cache[date]
 
-        file_path = self.raw_data_dir / f"{date}.json"
+        file_path = self.data_dir / f"{date}.json"
         if not file_path.exists():
             raise FileNotFoundError(f"No data found for date {date}")
 
