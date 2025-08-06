@@ -129,8 +129,19 @@ class DataFetcher:
         self, data_type: str, start_date: str, end_date: str
     ) -> Dict[str, Any]:
         """Fetch data for a date range with progress feedback."""
-        start_dt = datetime.strptime(start_date, "%Y-%m-%d")
-        end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+        try:
+            start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+            end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+        except ValueError as e:
+            raise ValueError(f"Invalid date format. Use YYYY-MM-DD: {e}")
+
+        if start_dt > end_dt:
+            raise ValueError("Start date must be before or equal to end date")
+
+        # Reasonable date range check
+        limit_days = 366 * 2  # (not more than 2 years)
+        if (end_dt - start_dt).days > limit_days:
+            raise ValueError(f"Date range too large. Maximum {limit_days} days allowed")
 
         # Generate list of dates to fetch
         dates_to_fetch = []

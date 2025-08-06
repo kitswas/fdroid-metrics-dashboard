@@ -9,7 +9,7 @@ from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 
-from etl.getdata_apps import SUB_DATA_DIR as DATA_DIR
+from etl.getdata_apps import SUB_DATA_DIR as DATA_DIR, SERVERS
 
 
 class AppMetricsAnalyzer:
@@ -21,9 +21,10 @@ class AppMetricsAnalyzer:
             data_dir = DATA_DIR
         self.data_dir = data_dir
         self._cache = {}
+        self._cache_size_limit = 100  # Limit cache to 100 entries
 
         # HTTP servers to aggregate data from
-        self.servers = ["http01.fdroid.net", "http02.fdroid.net", "http03.fdroid.net"]
+        self.servers = SERVERS
 
     def get_available_dates(self) -> List[str]:
         """Get list of available data dates across all servers."""
@@ -57,6 +58,12 @@ class AppMetricsAnalyzer:
 
         with open(file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
+
+        # Simple cache size management - remove oldest entries if cache is too large
+        if len(self._cache) >= self._cache_size_limit:
+            # Remove the first (oldest) cache entry
+            oldest_key = next(iter(self._cache))
+            del self._cache[oldest_key]
 
         self._cache[cache_key] = data
         return data
@@ -375,7 +382,11 @@ class AppMetricsAnalyzer:
                     # Filter for package API paths
                     if path.startswith("/api/v1/packages/"):
                         # Extract package name from path
-                        package_name = path.replace("/api/v1/packages/", "")
+                        package_name = path.replace("/api/v1/packages/", "").strip()
+
+                        # Skip empty or invalid package names
+                        if not package_name or "/" in package_name:
+                            continue
 
                         if package_name not in package_data:
                             package_data[package_name] = {

@@ -265,14 +265,12 @@ def show_path_analysis(analyzer: AppMetricsAnalyzer, dates: list):
     with col1:
         st.metric("Total Unique Paths", len(path_df))
     with col2:
-        st.metric(
-            "Most Popular Path",
-            path_df.iloc[0]["path"][:50] + "..."
-            if len(path_df) > 0 and len(path_df.iloc[0]["path"]) > 50
-            else path_df.iloc[0]["path"]
-            if len(path_df) > 0
-            else "N/A",
-        )
+        if len(path_df) > 0:
+            path = path_df.iloc[0]["path"]
+            truncated_path = path if len(path) <= 50 else path[:47] + "..."
+            st.metric("Most Popular Path", truncated_path)
+        else:
+            st.metric("Most Popular Path", "N/A")
     with col3:
         st.metric(
             "Max Path Hits",
@@ -398,15 +396,14 @@ def show_package_analysis(analyzer: AppMetricsAnalyzer, dates: list):
     with col2:
         st.metric("Total Package Hits", f"{package_df['total_hits'].sum():,}")
     with col3:
-        most_popular = package_df.iloc[0] if len(package_df) > 0 else None
-        st.metric(
-            "Most Popular Package",
-            most_popular["package_name"][:30] + "..."
-            if most_popular is not None and len(most_popular["package_name"]) > 30
-            else most_popular["package_name"]
-            if most_popular is not None
-            else "N/A",
-        )
+        if len(package_df) > 0:
+            package_name = package_df.iloc[0]["package_name"]
+            truncated_name = (
+                package_name if len(package_name) <= 30 else package_name[:27] + "..."
+            )
+            st.metric("Most Popular Package", truncated_name)
+        else:
+            st.metric("Most Popular Package", "N/A")
     with col4:
         st.metric(
             "Max Package Hits",
@@ -770,7 +767,9 @@ def show_apps_technical_analysis(analyzer: AppMetricsAnalyzer, dates: list):
                 )
                 all_paths[path] += hits
 
-        except Exception:
+        except Exception as e:
+            # Log unexpected errors but continue processing
+            print(f"Warning: Error processing date {date}: {e}")
             continue
 
     # Server reliability analysis

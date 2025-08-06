@@ -21,6 +21,7 @@ class SearchMetricsAnalyzer:
             data_dir = DATA_DIR
         self.data_dir = data_dir
         self._cache = {}
+        self._cache_size_limit = 1000
 
     def get_available_dates(self) -> List[str]:
         """Get list of available data dates."""
@@ -47,6 +48,12 @@ class SearchMetricsAnalyzer:
 
         with open(file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
+
+        # Simple cache size management - remove oldest entries if cache is too large
+        if len(self._cache) >= self._cache_size_limit:
+            # Remove the first (oldest) cache entry
+            oldest_key = next(iter(self._cache))
+            del self._cache[oldest_key]
 
         self._cache[date] = data
         return data
