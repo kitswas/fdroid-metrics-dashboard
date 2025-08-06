@@ -45,13 +45,13 @@ Download F-Droid search metrics data:
 
 ```bash
 # Download current month's search data
-uv run python search/getdata.py
+uv run python -m etl.getdata_search
 
 # Download specific month
-uv run python search/getdata.py 2024 6
+uv run python -m etl.getdata_search 2024 6
 
 # Download specific year and month
-uv run python search/getdata.py 2024 12
+uv run python -m etl.getdata_search 2024 12
 ```
 
 ### App Metrics Data
@@ -60,13 +60,13 @@ Download F-Droid app metrics data from HTTP servers:
 
 ```bash
 # Download current month's app data
-uv run python search/getappsdata.py
+uv run python -m etl.getdata_apps
 
 # Download specific month
-uv run python search/getappsdata.py 2024 6
+uv run python -m etl.getdata_apps 2024 6
 
 # Download specific year and month
-uv run python search/getappsdata.py 2024 12
+uv run python -m etl.getdata_apps 2024 12
 ```
 
 ## Dashboard
@@ -90,12 +90,10 @@ The dashboard will be available at `http://localhost:8501` and includes:
 
 - **Overview**: High-level app download metrics and trends
 - **Request Paths**: Analysis of requested files and paths
+- **Packages**: F-Droid package API request analysis
 - **Geographic**: Geographic distribution of app downloads
 - **Server Comparison**: Performance comparison across HTTP servers
 - **Technical**: Server reliability and error analysis
-- **Search Queries**: Detailed analysis of search patterns
-- **Geographic**: Usage by country and region
-- **Technical**: Error rates and request path analysis
 
 ## Features
 
