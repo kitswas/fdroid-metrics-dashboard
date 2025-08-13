@@ -12,12 +12,20 @@ import streamlit as st
 # Import existing data fetching functions
 from etl.getdata_apps import (
     BASE_URL as APPS_BASE_URL,
+)
+from etl.getdata_apps import (
     SERVERS,
+)
+from etl.getdata_apps import (
     SUB_DATA_DIR as APPS_DATA_DIR,
 )
 from etl.getdata_search import (
     BASE_URL as SEARCH_BASE_URL,
+)
+from etl.getdata_search import (
     INDEX_URL,
+)
+from etl.getdata_search import (
     SUB_DATA_DIR as SEARCH_DATA_DIR,
 )
 

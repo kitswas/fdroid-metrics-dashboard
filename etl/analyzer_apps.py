@@ -9,7 +9,8 @@ from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 
-from etl.getdata_apps import SUB_DATA_DIR as DATA_DIR, SERVERS
+from etl.getdata_apps import SERVERS
+from etl.getdata_apps import SUB_DATA_DIR as DATA_DIR
 
 
 class AppMetricsAnalyzer:

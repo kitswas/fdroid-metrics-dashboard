@@ -18,7 +18,11 @@ A comprehensive dashboard for analyzing F-Droid app store metrics, including sea
 - Server performance comparison
 - Geographic distribution of downloads
 
-## Setup Instructions
+## Hosted Dashboard (via Streamlit)
+
+<https://fdroid-metrics.streamlit.app/>
+
+## Local Setup Instructions
 
 You need the UV package/project manager to install the dependencies.  
 You can get [UV here](https://docs.astral.sh/uv/getting-started/installation/).
@@ -47,11 +51,11 @@ Download F-Droid search metrics data:
 # Download current month's search data
 uv run python -m etl.getdata_search
 
-# Download specific month
-uv run python -m etl.getdata_search 2024 6
-
 # Download specific year and month
 uv run python -m etl.getdata_search 2024 12
+
+# Or ask for help
+uv run python -m etl.getdata_search --help
 ```
 
 ### App Metrics Data
@@ -62,11 +66,11 @@ Download F-Droid app metrics data from HTTP servers:
 # Download current month's app data
 uv run python -m etl.getdata_apps
 
-# Download specific month
+# Download specific year and month
 uv run python -m etl.getdata_apps 2024 6
 
-# Download specific year and month
-uv run python -m etl.getdata_apps 2024 12
+# Or ask for help
+uv run python -m etl.getdata_apps --help
 ```
 
 ## Dashboard
@@ -77,31 +81,7 @@ Launch the interactive multipage dashboard:
 uv run streamlit run dashboard.py
 ```
 
-The dashboard will be available at `http://localhost:8501` and includes:
-
-### 🔍 Search Metrics Dashboard
-
-- **Overview**: High-level search metrics and trends
-- **Search Queries**: Detailed analysis of search patterns  
-- **Geographic**: Geographic distribution of search traffic
-- **Technical**: HTTP errors and request path analysis
-
-### 📱 App Metrics Dashboard
-
-- **Overview**: High-level app download metrics and trends
-- **Request Paths**: Analysis of requested files and paths
-- **Packages**: F-Droid package API request analysis
-- **Geographic**: Geographic distribution of app downloads
-- **Server Comparison**: Performance comparison across HTTP servers
-- **Technical**: Server reliability and error analysis
-
-## Features
-
-- 📊 Interactive charts and visualizations
-- 🔍 Search query popularity analysis
-- 🌍 Geographic usage patterns
-- 📈 Time series analysis
-- 🛠️ Technical metrics and error tracking
+The dashboard will be available at <http://localhost:8501>.
 
 ## Code Formatting and Linting
 

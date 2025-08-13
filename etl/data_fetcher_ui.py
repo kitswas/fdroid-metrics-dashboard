@@ -3,7 +3,9 @@ Data fetching UI components for F-Droid dashboard
 """
 
 from datetime import datetime, timedelta
+
 import streamlit as st
+
 from etl.data_fetcher import DataFetcher
 
 
