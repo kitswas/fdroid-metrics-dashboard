@@ -3,6 +3,8 @@
 Test script for F-Droid metadata fetcher
 """
 
+import logging
+
 from etl.fdroid_metadata import FDroidMetadataFetcher
 
 
@@ -18,37 +20,38 @@ def test_metadata_fetcher():
         "com.nonexistent.package",  # Non-existent package for testing fallback
     ]
 
-    print("Testing F-Droid metadata fetcher...")
-    print("=" * 50)
+    logging.info("Testing F-Droid metadata fetcher...")
+    logging.info("=" * 50)
 
     for package_id in test_packages:
-        print(f"\nTesting package: {package_id}")
+        logging.info(f"Testing package: {package_id}")
 
         # Get metadata
         metadata = fetcher.get_package_metadata(package_id)
         if metadata:
-            print("  ✓ Metadata found")
-            print(f"  AutoName: {metadata.get('AutoName', 'N/A')}")
-            print(f"  Categories: {metadata.get('Categories', 'N/A')}")
-            print(f"  License: {metadata.get('License', 'N/A')}")
+            logging.info("  ✓ Metadata found")
+            logging.info(f"  AutoName: {metadata.get('AutoName', 'N/A')}")
+            logging.info(f"  Categories: {metadata.get('Categories', 'N/A')}")
+            logging.info(f"  License: {metadata.get('License', 'N/A')}")
         else:
-            print("  ✗ No metadata found")
+            logging.warning("  ✗ No metadata found")
 
         # Get categories
         categories = fetcher.get_package_categories(package_id)
-        print(f"  Categories: {categories}")
+        logging.info(f"  Categories: {categories}")
 
         # Get primary category (with fallback)
         primary_category = fetcher.get_primary_category(package_id)
-        print(f"  Primary category: {primary_category}")
+        logging.info(f"  Primary category: {primary_category}")
 
     # Show cache statistics
-    print("\n" + "=" * 50)
-    print("Cache Statistics:")
+    logging.info("=" * 50)
+    logging.info("Cache Statistics:")
     stats = fetcher.get_cache_stats()
     for key, value in stats.items():
-        print(f"  {key}: {value}")
+        logging.info(f"  {key}: {value}")
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     test_metadata_fetcher()

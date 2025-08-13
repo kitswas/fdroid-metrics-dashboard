@@ -4,6 +4,7 @@ Read the index and download a month's worth of data from the FDroid API
 
 import argparse
 import json
+import logging
 import pathlib
 from datetime import datetime
 
@@ -14,14 +15,16 @@ INDEX_URL = f"{BASE_URL}/index.json"
 RAW_DATA_DIR = pathlib.Path(__file__).parent / "raw"
 SUB_DATA_DIR = RAW_DATA_DIR / "search"
 
+logger = logging.getLogger(__name__)
+
 
 def fetch_index() -> list[str]:
     """Fetch and return the index of available data files."""
-    print("Fetching index...")
+    logger.info("Fetching index...")
     response = re.get(INDEX_URL)
     response.raise_for_status()
     index = response.json()
-    print(f"Found {len(index)} available files")
+    logger.info(f"Found {len(index)} available files")
     return index
 
 
@@ -43,7 +46,7 @@ def filter_files_for_month(index: list[str], year: int, month: int) -> list[str]
             # Skip files that don't match the expected date format
             continue
 
-    print(f"Found {len(month_files)} files for {year}-{month:02d}")
+    logger.info(f"Found {len(month_files)} files for {year}-{month:02d}")
     return sorted(month_files)
 
 
@@ -54,21 +57,21 @@ def download_file(filename: str) -> bool:
 
     # Check if file already exists
     if filepath.exists():
-        print(f"  {filename} already exists, skipping")
+        logger.debug(f"{filename} already exists, skipping")
         return True
 
     try:
-        print(f"  Downloading {filename}...")
+        logger.info(f"Downloading {filename}...")
         response = re.get(url)
         response.raise_for_status()
 
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(response.json(), f, indent=2)
 
-        print(f"  ✓ {filename} downloaded successfully")
+        logger.info(f"✓ {filename} downloaded successfully")
         return True
     except Exception as e:
-        print(f"  ✗ Failed to download {filename}: {e}")
+        logger.error(f"✗ Failed to download {filename}: {e}")
         return False
 
 
@@ -84,11 +87,11 @@ def download_month_data(year: int, month: int) -> None:
     month_files = filter_files_for_month(index, year, month)
 
     if not month_files:
-        print(f"No files found for {year}-{month:02d}")
+        logger.info(f"No files found for {year}-{month:02d}")
         return
 
     # Download files
-    print(f"\nDownloading {len(month_files)} files for {year}-{month:02d}...")
+    logger.info(f"Downloading {len(month_files)} files for {year}-{month:02d}...")
     successful = 0
     failed = 0
 
@@ -98,10 +101,10 @@ def download_month_data(year: int, month: int) -> None:
         else:
             failed += 1
 
-    print("\nDownload complete:")
-    print(f"  ✓ {successful} files downloaded successfully")
+    logger.info("Download complete:")
+    logger.info(f"✓ {successful} files downloaded successfully")
     if failed > 0:
-        print(f"  ✗ {failed} files failed to download")
+        logger.warning(f"✗ {failed} files failed to download")
 
 
 if __name__ == "__main__":
@@ -126,7 +129,18 @@ if __name__ == "__main__":
         help="Month to download data for (1-12)",
     )
 
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Enable verbose (DEBUG) logging",
+    )
+
     args = parser.parse_args()
 
-    print(f"Downloading data for {args.year}-{args.month:02d}")
+    # Configure logging
+    log_level = logging.DEBUG if args.verbose else logging.INFO
+    logging.basicConfig(level=log_level, format="%(levelname)s: %(message)s")
+
+    logger.info(f"Downloading data for {args.year}-{args.month:02d}")
     download_month_data(args.year, args.month)

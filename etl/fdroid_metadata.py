@@ -2,6 +2,7 @@
 F-Droid metadata fetcher for getting real package categories and information.
 """
 
+import logging
 import time
 from pathlib import Path
 from typing import Dict, List, Optional, Set
@@ -11,6 +12,8 @@ import requests
 import yaml
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+
+logger = logging.getLogger(__name__)
 
 
 class FDroidMetadataFetcher:
@@ -87,19 +90,19 @@ class FDroidMetadataFetcher:
                 # Package not found in fdroiddata - this is normal for some packages
                 return None
             else:
-                print(
-                    f"Warning: Failed to fetch metadata for {package_id}: HTTP {response.status_code}"
+                logger.warning(
+                    f"Failed to fetch metadata for {package_id}: HTTP {response.status_code}"
                 )
                 return None
 
         except requests.exceptions.RequestException as e:
-            print(f"Warning: Network error fetching metadata for {package_id}: {e}")
+            logger.warning(f"Network error fetching metadata for {package_id}: {e}")
             return None
         except yaml.YAMLError as e:
-            print(f"Warning: YAML parsing error for {package_id}: {e}")
+            logger.warning(f"YAML parsing error for {package_id}: {e}")
             return None
         except Exception as e:
-            print(f"Warning: Unexpected error fetching metadata for {package_id}: {e}")
+            logger.error(f"Unexpected error fetching metadata for {package_id}: {e}")
             return None
 
     def _load_cached_metadata(self, package_id: str) -> Optional[dict]:
@@ -119,7 +122,7 @@ class FDroidMetadataFetcher:
                 with open(cache_path, "r", encoding="utf-8") as f:
                     return yaml.safe_load(f)
             except Exception as e:
-                print(f"Warning: Error reading cached metadata for {package_id}: {e}")
+                logger.warning(f"Error reading cached metadata for {package_id}: {e}")
                 # Remove corrupted cache file
                 try:
                     cache_path.unlink()
@@ -205,7 +208,7 @@ class FDroidMetadataFetcher:
 
             # Progress indicator for large batches
             if i > 0 and i % 50 == 0:
-                print(f"Fetched metadata for {i}/{len(package_ids)} packages...")
+                logger.info(f"Fetched metadata for {i}/{len(package_ids)} packages…")
 
         return results
 

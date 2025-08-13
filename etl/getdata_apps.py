@@ -4,6 +4,7 @@ Download app metrics data from F-Droid HTTP servers
 
 import argparse
 import json
+import logging
 import pathlib
 from datetime import datetime
 
@@ -14,15 +15,17 @@ SERVERS = ["http01.fdroid.net", "http02.fdroid.net", "http03.fdroid.net"]
 RAW_DATA_DIR = pathlib.Path(__file__).parent / "raw"
 SUB_DATA_DIR = RAW_DATA_DIR / "apps"
 
+logger = logging.getLogger(__name__)
+
 
 def fetch_index(server: str) -> list[str]:
     """Fetch and return the index of available data files for a server."""
-    print(f"Fetching index for {server}...")
+    logger.info(f"Fetching index for {server}...")
     index_url = f"{BASE_URL}/{server}/index.json"
     response = re.get(index_url)
     response.raise_for_status()
     index = response.json()
-    print(f"Found {len(index)} available files for {server}")
+    logger.info(f"Found {len(index)} available files for {server}")
     return index
 
 
@@ -53,21 +56,21 @@ def download_file(server: str, filename: str) -> bool:
 
     # Check if file already exists
     if filepath.exists():
-        print(f"  {server}/{filename} already exists, skipping")
+        logger.debug(f"{server}/{filename} already exists, skipping")
         return True
 
     try:
-        print(f"  Downloading {server}/{filename}...")
+        logger.info(f"Downloading {server}/{filename}...")
         response = re.get(url)
         response.raise_for_status()
 
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(response.json(), f, indent=2)
 
-        print(f"  ✓ {server}/{filename} downloaded successfully")
+        logger.info(f"✓ {server}/{filename} downloaded successfully")
         return True
     except Exception as e:
-        print(f"  ✗ Failed to download {server}/{filename}: {e}")
+        logger.error(f"✗ Failed to download {server}/{filename}: {e}")
         return False
 
 
@@ -80,9 +83,9 @@ def download_month_data(year: int, month: int) -> None:
     total_failed = 0
 
     for server in SERVERS:
-        print(f"\n{'=' * 50}")
-        print(f"Processing {server}")
-        print(f"{'=' * 50}")
+        logger.info("=" * 50)
+        logger.info(f"Processing {server}")
+        logger.info("=" * 50)
 
         try:
             # Fetch index for this server
@@ -92,11 +95,11 @@ def download_month_data(year: int, month: int) -> None:
             month_files = filter_files_for_month(index, year, month)
 
             if not month_files:
-                print(f"No files found for {server} in {year}-{month:02d}")
+                logger.info(f"No files found for {server} in {year}-{month:02d}")
                 continue
 
             # Download files for this server
-            print(f"\nDownloading {len(month_files)} files for {server}...")
+            logger.info(f"Downloading {len(month_files)} files for {server}...")
             successful = 0
             failed = 0
 
@@ -106,24 +109,26 @@ def download_month_data(year: int, month: int) -> None:
                 else:
                     failed += 1
 
-            print(f"\n{server} download complete:")
-            print(f"  ✓ {successful} files downloaded successfully")
+            logger.info(f"{server} download complete:")
+            logger.info(f"✓ {successful} files downloaded successfully")
             if failed > 0:
-                print(f"  ✗ {failed} files failed to download")
+                logger.warning(f"✗ {failed} files failed to download")
 
             total_successful += successful
             total_failed += failed
 
         except Exception as e:
-            print(f"Failed to process {server}: {e}")
+            logger.error(f"Failed to process {server}: {e}")
             continue
 
-    print(f"\n{'=' * 50}")
-    print("OVERALL SUMMARY")
-    print(f"{'=' * 50}")
-    print(f"✓ {total_successful} files downloaded successfully across all servers")
+    logger.info("=" * 50)
+    logger.info("OVERALL SUMMARY")
+    logger.info("=" * 50)
+    logger.info(
+        f"✓ {total_successful} files downloaded successfully across all servers"
+    )
     if total_failed > 0:
-        print(f"✗ {total_failed} files failed to download")
+        logger.warning(f"✗ {total_failed} files failed to download")
 
 
 if __name__ == "__main__":
@@ -148,7 +153,18 @@ if __name__ == "__main__":
         help="Month to download data for (1-12)",
     )
 
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Enable verbose (DEBUG) logging",
+    )
+
     args = parser.parse_args()
 
-    print(f"Downloading app metrics data for {args.year}-{args.month:02d}")
+    # Configure logging
+    log_level = logging.DEBUG if args.verbose else logging.INFO
+    logging.basicConfig(level=log_level, format="%(levelname)s: %(message)s")
+
+    logger.info(f"Downloading app metrics data for {args.year}-{args.month:02d}")
     download_month_data(args.year, args.month)

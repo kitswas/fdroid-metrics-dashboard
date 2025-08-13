@@ -3,6 +3,7 @@ Analyze F-Droid app metrics data from HTTP servers
 """
 
 import json
+import logging
 import pathlib
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
@@ -11,6 +12,8 @@ import pandas as pd
 
 from etl.getdata_apps import SERVERS
 from etl.getdata_apps import SUB_DATA_DIR as DATA_DIR
+
+logger = logging.getLogger(__name__)
 
 
 class AppMetricsAnalyzer:
@@ -210,7 +213,7 @@ class AppMetricsAnalyzer:
                 continue
             except Exception as e:
                 # Log unexpected errors but continue processing
-                print(f"Warning: Error processing date {date}: {e}")
+                logger.warning(f"Error processing date {date}: {e}")
                 continue
 
         return pd.DataFrame(records).sort_values("date")
@@ -262,7 +265,7 @@ class AppMetricsAnalyzer:
                 continue
             except Exception as e:
                 # Log unexpected errors but continue processing
-                print(f"Warning: Error processing date {date}: {e}")
+                logger.warning(f"Error processing date {date}: {e}")
                 continue
 
         # Calculate averages
@@ -315,7 +318,7 @@ class AppMetricsAnalyzer:
                 continue
             except Exception as e:
                 # Log unexpected errors but continue processing
-                print(f"Warning: Error processing date {date}: {e}")
+                logger.warning(f"Error processing date {date}: {e}")
                 continue
 
         # Calculate averages
@@ -414,7 +417,7 @@ class AppMetricsAnalyzer:
                 continue
             except Exception as e:
                 # Log unexpected errors but continue processing
-                print(f"Warning: Error processing date {date}: {e}")
+                logger.warning(f"Error processing date {date}: {e}")
                 continue
 
         # Calculate averages

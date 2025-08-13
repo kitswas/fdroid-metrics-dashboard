@@ -2,6 +2,8 @@
 App metrics page for F-Droid dashboard
 """
 
+import logging
+
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -11,6 +13,8 @@ from plotly.subplots import make_subplots
 from etl.analyzer_apps import AppMetricsAnalyzer
 from etl.data_fetcher_ui import show_data_fetcher, show_quick_fetch_buttons
 from etl.fdroid_metadata import FDroidMetadataFetcher
+
+logger = logging.getLogger(__name__)
 
 
 def show_apps_page():
@@ -82,7 +86,7 @@ def show_apps_page():
         ]
     else:
         selected_dates = available_dates
-        st.sidebar.info(f"Only one date available: {available_dates[0]}")
+    st.sidebar.info(f"Only one date available: {available_dates[0]}")
 
     # Add data fetching option in sidebar
     st.sidebar.markdown("---")
@@ -769,7 +773,7 @@ def show_apps_technical_analysis(analyzer: AppMetricsAnalyzer, dates: list):
 
         except Exception as e:
             # Log unexpected errors but continue processing
-            print(f"Warning: Error processing date {date}: {e}")
+            logger.warning(f"Error processing date {date}: {e}")
             continue
 
     # Server reliability analysis
