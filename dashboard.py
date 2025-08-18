@@ -35,7 +35,7 @@ def main():
 
     st.sidebar.markdown("### Data Sources")
     st.sidebar.markdown("- **Search**: search.f-droid.org")
-    st.sidebar.markdown("- **Apps**: http01/02/03.fdroid.net")
+    st.sidebar.markdown("- **Apps**: http01/02/03.fdroid.net, originserver.f-droid.org")
 
     # Route to appropriate page
     if page == "🔍 Search Metrics":

@@ -11,7 +11,12 @@ from datetime import datetime
 import requests as re
 
 BASE_URL = "https://fdroid.gitlab.io/metrics"
-SERVERS = ["http01.fdroid.net", "http02.fdroid.net", "http03.fdroid.net"]
+SERVERS = [
+    "http01.fdroid.net",
+    "http02.fdroid.net",
+    "http03.fdroid.net",
+    "originserver.f-droid.org",
+]
 RAW_DATA_DIR = pathlib.Path(__file__).parent / "raw"
 SUB_DATA_DIR = RAW_DATA_DIR / "apps"
 

@@ -13,6 +13,7 @@ from plotly.subplots import make_subplots
 from etl.analyzer_apps import AppMetricsAnalyzer
 from etl.data_fetcher_ui import show_data_fetcher, show_quick_fetch_buttons
 from etl.fdroid_metadata import FDroidMetadataFetcher
+from etl.getdata_apps import SERVERS
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +22,7 @@ def show_apps_page():
     """Show the app metrics page."""
     st.title("📱 F-Droid App Metrics")
     st.markdown(
-        "Analyze app download patterns and usage statistics from F-Droid HTTP servers (http01, http02, http03)."
+        "Analyze app download patterns and usage statistics from F-Droid HTTP servers (http01, http02, http03, originserver)."
     )
 
     # Initialize analyzer
@@ -149,7 +150,7 @@ def show_apps_overview(analyzer: AppMetricsAnalyzer, dates: list):
         with col1:
             st.metric("Total Hits", f"{summary['total_hits']:,}")
         with col2:
-            st.metric("Active Servers", f"{summary['servers_active']}/3")
+            st.metric("Active Servers", f"{summary['servers_active']}/{len(SERVERS)}")
         with col3:
             st.metric("Unique Paths", f"{summary['unique_paths']:,}")
         with col4:
@@ -204,7 +205,8 @@ def show_apps_overview(analyzer: AppMetricsAnalyzer, dates: list):
                 st.metric("Peak Week Hits", f"{ts_data['total_hits'].max():,}")
             with col4:
                 st.metric(
-                    "Avg Servers Active", f"{ts_data['servers_active'].mean():.1f}/3"
+                    "Avg Servers Active",
+                    f"{ts_data['servers_active'].mean():.1f}/{len(SERVERS)}",
                 )
 
             # Time series charts
@@ -653,7 +655,8 @@ def show_server_comparison(analyzer: AppMetricsAnalyzer, dates: list):
         col1, col2, col3, col4 = st.columns(4)
         with col1:
             st.metric(
-                "Active Servers", f"{len(comparison_df[comparison_df['hits'] > 0])}/3"
+                "Active Servers",
+                f"{len(comparison_df[comparison_df['hits'] > 0])}/{len(SERVERS)}",
             )
         with col2:
             st.metric("Total Combined Hits", f"{comparison_df['hits'].sum():,}")
