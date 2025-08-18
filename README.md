@@ -2,6 +2,12 @@
 
 A comprehensive dashboard for analyzing F-Droid app store metrics, including search patterns and app download statistics.
 
+> [!NOTE]
+> The calculations are a bit iffy. _(My calculations always are :P)_  
+> The data fetcher needs a bit of work too on the user-friendliness side.  
+> And I am unsure whether the data labels mean what I think they mean. (Is hit == download ?).  
+> Enjoy it while it works! I probably won’t maintain it long-term.  
+
 ## Key Features
 
 ### 🔍 Search Metrics
@@ -27,7 +33,7 @@ A comprehensive dashboard for analyzing F-Droid app store metrics, including sea
 You need the UV package/project manager to install the dependencies.  
 You can get [UV here](https://docs.astral.sh/uv/getting-started/installation/).
 
-> [!NOTE]
+> [!TIP]
 > To change the Python version, change the `requires-python` field in [pyproject.toml](pyproject.toml)
 > and the number in [.python-version](.python-version).  
 > uv will take care of the rest.
@@ -41,7 +47,7 @@ source .venv/bin/activate # Linux/MacOS
 uv sync --link-mode=symlink # Install the dependencies, use -U to update
 ```
 
-## Data Collection
+## Data Fetching
 
 ### Search Metrics Data
 
