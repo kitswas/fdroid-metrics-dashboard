@@ -43,7 +43,7 @@ if package_id:
     if not available_dates:
         st.error("No app data found. Please fetch data first from the main Apps page.")
         if st.button("Go to Apps Page"):
-            st.switch_page("pages/02_Apps.py")
+            st.switch_page("pages/app_metrics.py")
         st.stop()
 
     # Date selection for package details
@@ -93,7 +93,7 @@ else:
         st.info("💡 **Please fetch data first from the App Metrics page.**")
 
         if st.button("📱 Go to App Metrics"):
-            st.switch_page("pages/02_Apps.py")
+            st.switch_page("pages/app_metrics.py")
     else:
         st.sidebar.subheader("Date Range")
         if len(available_dates) > 1:

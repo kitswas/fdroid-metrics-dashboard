@@ -507,4 +507,4 @@ def show_package_search_and_select(analyzer: AppMetricsAnalyzer, dates: list):
             if st.button(f"📦 View Details for {selected_package}"):
                 # Store package in session state and navigate to package details page
                 st.session_state["selected_package"] = selected_package
-                st.switch_page("pages/03_Package_Details.py")
+                st.switch_page("pages/package_details.py")

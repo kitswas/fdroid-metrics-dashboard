@@ -35,7 +35,7 @@ def main():
             "Analyze search patterns and usage statistics from the F-Droid app store search."
         )
         if st.button("Go to Search Metrics", key="search_btn"):
-            st.switch_page("pages/01_Search_Metrics.py")
+            st.switch_page("pages/search_metrics.py")
 
     with col2:
         st.markdown("### 📱 App Metrics")
@@ -43,7 +43,7 @@ def main():
             "Analyze app download patterns and usage statistics from F-Droid HTTP servers."
         )
         if st.button("Go to App Metrics", key="apps_btn"):
-            st.switch_page("pages/02_Apps.py")
+            st.switch_page("pages/app_metrics.py")
 
     with col3:
         st.markdown("### 📦 Package Details")
@@ -51,7 +51,7 @@ def main():
             "Browse and analyze individual F-Droid packages with detailed download statistics."
         )
         if st.button("Go to Package Details", key="package_btn"):
-            st.switch_page("pages/03_Package_Details.py")
+            st.switch_page("pages/package_details.py")
 
     st.markdown("---")
 
