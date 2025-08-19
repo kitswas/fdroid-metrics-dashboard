@@ -34,8 +34,8 @@ def show_package_details_page(
             "Try searching for packages in the main Apps page or check if the package ID is correct."
         )
 
-        if st.button("🔙 Back to Apps Page"):
-            # Clear query params to go back to main app page
+        if st.button("🔙 Back to Package Browser"):
+            # Clear query params to go back to package browser
             st.query_params.clear()
             st.rerun()
         return
@@ -416,8 +416,8 @@ def show_package_details_page(
     col1, col2 = st.columns(2)
 
     with col1:
-        if st.button("🔙 Back to Apps Page"):
-            # Clear query params to go back to main app page
+        if st.button("🔙 Back to Package Browser"):
+            # Clear query params to go back to package browser
             st.query_params.clear()
             st.rerun()
 
@@ -505,6 +505,6 @@ def show_package_search_and_select(analyzer: AppMetricsAnalyzer, dates: list):
 
         if selected_package and selected_package != "":
             if st.button(f"📦 View Details for {selected_package}"):
-                # Set query parameter to navigate to package details
-                st.query_params["package"] = selected_package
-                st.rerun()
+                # Store package in session state and navigate to package details page
+                st.session_state["selected_package"] = selected_package
+                st.switch_page("pages/03_Package_Details.py")

@@ -603,9 +603,9 @@ def show_package_analysis(analyzer: AppMetricsAnalyzer, dates: list):
 
                     if selected_package and selected_package != "":
                         if st.button(f"📊 View Detailed Stats for {selected_package}"):
-                            # Navigate to package details page
-                            st.query_params["package"] = selected_package
-                            st.rerun()
+                            # Store package in session state and navigate to package details page
+                            st.session_state["selected_package"] = selected_package
+                            st.switch_page("pages/03_Package_Details.py")
             else:
                 st.info(f"No packages found matching '{search_term}'")
 
@@ -717,9 +717,9 @@ def show_package_analysis(analyzer: AppMetricsAnalyzer, dates: list):
 
             if selected_download_package and selected_download_package != "":
                 if st.button(f"📦 View Details for {selected_download_package}"):
-                    # Navigate to package details page
-                    st.query_params["package"] = selected_download_package
-                    st.rerun()
+                    # Store package in session state and navigate to package details page
+                    st.session_state["selected_package"] = selected_download_package
+                    st.switch_page("pages/03_Package_Details.py")
         else:
             st.info(
                 "No packages with APK download data found in the selected date range."
