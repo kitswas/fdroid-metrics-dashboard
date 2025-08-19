@@ -212,63 +212,71 @@ def show_package_details_page(
     if len(dates) > 1:
         st.subheader("📅 Download Activity by Period")
 
-        # Get cumulative data for each measurement date
+        # Get period data for each measurement date
+        period_data_raw = []
+        sorted_dates = sorted(dates)
+
+        for current_date in sorted_dates:
+            # Get downloads for this specific period (data published on this date)
+            period_package_data = analyzer.get_package_downloads(
+                package_id, [current_date]
+            )
+
+            period_data_raw.append(
+                {
+                    "date": pd.to_datetime(current_date),
+                    "period_downloads": period_package_data["total_downloads"],
+                    "period_api_hits": period_package_data["api_hits"],
+                    "versions": len(period_package_data["versions"]),
+                }
+            )
+
+        # Calculate cumulative data from period data
         cumulative_data = []
-        for date in sorted(dates):
-            daily_data = analyzer.get_package_downloads(package_id, [date])
+        cumulative_downloads = 0
+        cumulative_api_hits = 0
+
+        for item in period_data_raw:
+            cumulative_downloads += item["period_downloads"]
+            cumulative_api_hits += item["period_api_hits"]
+
             cumulative_data.append(
                 {
-                    "date": pd.to_datetime(date),
-                    "cumulative_downloads": daily_data["total_downloads"],
-                    "cumulative_api_hits": daily_data["api_hits"],
-                    "versions": len(daily_data["versions"]),
+                    "date": item["date"],
+                    "period_downloads": item["period_downloads"],
+                    "period_api_hits": item["period_api_hits"],
+                    "cumulative_downloads": cumulative_downloads,
+                    "cumulative_api_hits": cumulative_api_hits,
+                    "versions": item["versions"],
                 }
             )
 
         ts_df = pd.DataFrame(cumulative_data).sort_values("date")
 
-        if not ts_df.empty and ts_df["cumulative_downloads"].sum() > 0:
-            # Calculate period-based data (downloads between measurement dates)
-            period_data = []
+        if not ts_df.empty and ts_df["period_downloads"].sum() > 0:
+            # Create period labels for better display - data is already period-based
+            period_display_data = []
             sorted_dates = sorted(dates)
 
-            for i, current_date in enumerate(sorted_dates):
+            for i, (idx, row) in enumerate(ts_df.iterrows()):
+                current_date = sorted_dates[i]
                 if i == 0:
-                    # First period: from start to first measurement
-                    period_downloads = ts_df.iloc[i]["cumulative_downloads"]
-                    period_api_hits = ts_df.iloc[i]["cumulative_api_hits"]
                     period_label = f"Up to {current_date}"
-                    start_date = "Start"
-                    end_date = current_date
                 else:
-                    # Subsequent periods: difference from previous measurement
-                    period_downloads = (
-                        ts_df.iloc[i]["cumulative_downloads"]
-                        - ts_df.iloc[i - 1]["cumulative_downloads"]
-                    )
-                    period_api_hits = (
-                        ts_df.iloc[i]["cumulative_api_hits"]
-                        - ts_df.iloc[i - 1]["cumulative_api_hits"]
-                    )
-                    start_date = sorted_dates[i - 1]
-                    end_date = current_date
-                    period_label = f"{start_date} to {end_date}"
+                    prev_date = sorted_dates[i - 1]
+                    period_label = f"{prev_date} to {current_date}"
 
-                period_data.append(
+                period_display_data.append(
                     {
                         "period": period_label,
-                        "start_date": start_date,
-                        "end_date": end_date,
-                        "period_downloads": max(
-                            0, period_downloads
-                        ),  # Ensure non-negative
-                        "period_api_hits": max(0, period_api_hits),
-                        "cumulative_downloads": ts_df.iloc[i]["cumulative_downloads"],
-                        "cumulative_api_hits": ts_df.iloc[i]["cumulative_api_hits"],
+                        "period_downloads": row["period_downloads"],
+                        "period_api_hits": row["period_api_hits"],
+                        "cumulative_downloads": row["cumulative_downloads"],
+                        "cumulative_api_hits": row["cumulative_api_hits"],
                     }
                 )
 
-            period_df = pd.DataFrame(period_data)
+            period_df = pd.DataFrame(period_display_data)
 
             # Create period-based column charts
             col1, col2 = st.columns(2)
@@ -398,9 +406,9 @@ def show_package_details_page(
 
             # Add explanation
             st.info(
-                "📘 **Data Explanation**: Each measurement represents cumulative data up to that date. "
-                "Period downloads show the activity between measurement dates, calculated as the difference "
-                "between consecutive measurements."
+                "📘 **Data Explanation**: Each measurement date represents when data was published. "
+                "The download counts show actual downloads that occurred during the period leading up to that publication date. "
+                "Cumulative totals are calculated by adding period downloads progressively."
             )
 
     # Navigation
