@@ -168,26 +168,27 @@ def show_quick_fetch_buttons(data_type: str, key_prefix: str = ""):
     today = datetime.now().date()
 
     with col1:
-        if st.button("Last 3 Days", key=f"{key_prefix}quick_3days"):
-            start_date = (today - timedelta(days=2)).strftime("%Y-%m-%d")
+        if st.button("Last week", key=f"{key_prefix}quick_week"):
+            start_date = (today - timedelta(days=7)).strftime("%Y-%m-%d")
             end_date = today.strftime("%Y-%m-%d")
             return fetch_data_with_progress(fetcher, data_type, start_date, end_date)
 
     with col2:
-        if st.button("Last Week", key=f"{key_prefix}quick_week"):
-            start_date = (today - timedelta(days=6)).strftime("%Y-%m-%d")
+        if st.button("Last month", key=f"{key_prefix}quick_month"):
+            start_date = (today - timedelta(days=30)).strftime("%Y-%m-%d")
             end_date = today.strftime("%Y-%m-%d")
             return fetch_data_with_progress(fetcher, data_type, start_date, end_date)
 
     with col3:
-        if st.button("Last Month", key=f"{key_prefix}quick_month"):
-            start_date = (today - timedelta(days=29)).strftime("%Y-%m-%d")
+        if st.button("Last 3 months", key=f"{key_prefix}quick_3months"):
+            start_date = (today - timedelta(days=90)).strftime("%Y-%m-%d")
             end_date = today.strftime("%Y-%m-%d")
             return fetch_data_with_progress(fetcher, data_type, start_date, end_date)
 
     with col4:
-        if st.button("Yesterday", key=f"{key_prefix}quick_yesterday"):
-            yesterday = (today - timedelta(days=1)).strftime("%Y-%m-%d")
-            return fetch_data_with_progress(fetcher, data_type, yesterday, yesterday)
+        if st.button("Last 6 months", key=f"{key_prefix}quick_6months"):
+            start_date = (today - timedelta(days=180)).strftime("%Y-%m-%d")
+            end_date = today.strftime("%Y-%m-%d")
+            return fetch_data_with_progress(fetcher, data_type, start_date, end_date)
 
     return False
