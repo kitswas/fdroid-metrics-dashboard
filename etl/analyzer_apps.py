@@ -449,3 +449,192 @@ class AppMetricsAnalyzer:
             items.append((key, hits))
 
         return sorted(items, key=lambda x: x[1], reverse=True)[:limit]
+
+    def get_package_downloads(
+        self, package_id: str, dates: Optional[List[str]] = None
+    ) -> Dict:
+        """
+        Get download statistics for a specific package.
+
+        Returns a dictionary with:
+        - total_downloads: Total APK downloads across all versions
+        - versions: Dict mapping version codes to download counts
+        - api_hits: Total API hits for the package info
+        - countries: Dict mapping countries to download counts
+        """
+        if dates is None:
+            dates = self.get_available_dates()
+
+        result = {
+            "package_id": package_id,
+            "total_downloads": 0,
+            "versions": {},
+            "api_hits": 0,
+            "countries": {},
+            "dates_active": [],
+        }
+
+        for date in dates:
+            try:
+                data = self.load_merged_data(date)
+                paths = data.get("paths", {})
+                date_had_activity = False
+
+                for path, path_data in paths.items():
+                    # Check for APK downloads: /repo/{package_id}_{version}.apk
+                    if path.startswith("/repo/") and path.endswith(".apk"):
+                        # Extract package name and version from path
+                        filename = path.replace("/repo/", "").replace(".apk", "")
+
+                        # Handle potential query parameters (e.g., &pxdate=2025-08-05)
+                        if "&" in filename:
+                            filename = filename.split("&")[0]
+
+                        # Split on last underscore to separate package name and version
+                        if "_" in filename:
+                            parts = filename.rsplit("_", 1)
+                            if len(parts) == 2:
+                                pkg_name, version = parts
+                                if pkg_name == package_id:
+                                    hits = (
+                                        path_data.get("hits", 0)
+                                        if isinstance(path_data, dict)
+                                        else path_data
+                                    )
+                                    result["total_downloads"] += hits
+                                    result["versions"][version] = (
+                                        result["versions"].get(version, 0) + hits
+                                    )
+                                    date_had_activity = True
+
+                                    # Merge country data for this version
+                                    if isinstance(path_data, dict):
+                                        for country, country_hits in path_data.get(
+                                            "hitsPerCountry", {}
+                                        ).items():
+                                            result["countries"][country] = (
+                                                result["countries"].get(country, 0)
+                                                + country_hits
+                                            )
+
+                    # Check for API hits: /api/v1/packages/{package_id}
+                    elif path == f"/api/v1/packages/{package_id}":
+                        hits = (
+                            path_data.get("hits", 0)
+                            if isinstance(path_data, dict)
+                            else path_data
+                        )
+                        result["api_hits"] += hits
+                        date_had_activity = True
+
+                if date_had_activity:
+                    result["dates_active"].append(date)
+
+            except FileNotFoundError:
+                continue
+            except Exception as e:
+                logger.warning(
+                    f"Error processing date {date} for package {package_id}: {e}"
+                )
+                continue
+
+        return result
+
+    def get_all_packages_with_downloads(
+        self, dates: Optional[List[str]] = None
+    ) -> pd.DataFrame:
+        """
+        Get all packages that have APK downloads with their statistics.
+
+        Returns a DataFrame with columns:
+        - package_id: The package identifier
+        - total_downloads: Total APK downloads
+        - total_versions: Number of different versions downloaded
+        - api_hits: Total API hits
+        - dates_active: Number of dates with activity
+        """
+        if dates is None:
+            dates = self.get_available_dates()
+
+        all_packages = {}
+
+        for date in dates:
+            try:
+                data = self.load_merged_data(date)
+                paths = data.get("paths", {})
+
+                for path, path_data in paths.items():
+                    # Check for APK downloads
+                    if path.startswith("/repo/") and path.endswith(".apk"):
+                        filename = path.replace("/repo/", "").replace(".apk", "")
+
+                        # Handle potential query parameters
+                        if "&" in filename:
+                            filename = filename.split("&")[0]
+
+                        # Split on last underscore to separate package name and version
+                        if "_" in filename:
+                            parts = filename.rsplit("_", 1)
+                            if len(parts) == 2:
+                                pkg_name, version = parts
+
+                                if pkg_name not in all_packages:
+                                    all_packages[pkg_name] = {
+                                        "package_id": pkg_name,
+                                        "total_downloads": 0,
+                                        "versions": set(),
+                                        "api_hits": 0,
+                                        "dates_active": set(),
+                                    }
+
+                                hits = (
+                                    path_data.get("hits", 0)
+                                    if isinstance(path_data, dict)
+                                    else path_data
+                                )
+                                all_packages[pkg_name]["total_downloads"] += hits
+                                all_packages[pkg_name]["versions"].add(version)
+                                all_packages[pkg_name]["dates_active"].add(date)
+
+                    # Check for API hits
+                    elif path.startswith("/api/v1/packages/"):
+                        pkg_name = path.replace("/api/v1/packages/", "").strip()
+                        if pkg_name and "/" not in pkg_name:
+                            if pkg_name not in all_packages:
+                                all_packages[pkg_name] = {
+                                    "package_id": pkg_name,
+                                    "total_downloads": 0,
+                                    "versions": set(),
+                                    "api_hits": 0,
+                                    "dates_active": set(),
+                                }
+
+                            hits = (
+                                path_data.get("hits", 0)
+                                if isinstance(path_data, dict)
+                                else path_data
+                            )
+                            all_packages[pkg_name]["api_hits"] += hits
+                            all_packages[pkg_name]["dates_active"].add(date)
+
+            except FileNotFoundError:
+                continue
+            except Exception as e:
+                logger.warning(f"Error processing date {date}: {e}")
+                continue
+
+        # Convert to DataFrame
+        records = []
+        for pkg_data in all_packages.values():
+            records.append(
+                {
+                    "package_id": pkg_data["package_id"],
+                    "total_downloads": pkg_data["total_downloads"],
+                    "total_versions": len(pkg_data["versions"]),
+                    "api_hits": pkg_data["api_hits"],
+                    "dates_active": len(pkg_data["dates_active"]),
+                }
+            )
+
+        df = pd.DataFrame(records)
+        return df.sort_values("total_downloads", ascending=False)

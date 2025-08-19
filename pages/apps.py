@@ -584,9 +584,149 @@ def show_package_analysis(analyzer: AppMetricsAnalyzer, dates: list):
                     ["package_name", "total_hits", "appearances", "avg_hits"]
                 ].copy()
                 search_display["avg_hits"] = search_display["avg_hits"].round(1)
+
+                # Add package details link functionality
                 st.dataframe(search_display, use_container_width=True)
+
+                # Package selection for detailed view
+                if len(search_results) > 0:
+                    st.subheader("📦 View Package Details")
+                    selected_package = st.selectbox(
+                        "Select a package to view detailed download statistics:",
+                        options=[""] + search_results["package_name"].tolist(),
+                        format_func=lambda x: "Choose a package..."
+                        if x == ""
+                        else f"{x} ({search_results[search_results['package_name'] == x]['total_hits'].iloc[0]:,} API hits)"
+                        if x in search_results["package_name"].tolist()
+                        else x,
+                    )
+
+                    if selected_package and selected_package != "":
+                        if st.button(f"📊 View Detailed Stats for {selected_package}"):
+                            # Navigate to package details page
+                            st.query_params["package"] = selected_package
+                            st.rerun()
             else:
                 st.info(f"No packages found matching '{search_term}'")
+
+        # Show download statistics section
+        st.subheader("📱 Package Download Analysis")
+        st.markdown(
+            "*This section shows actual APK download statistics, separate from API request data above.*"
+        )
+
+        # Get packages with download data
+        download_packages_df = analyzer.get_all_packages_with_downloads(dates)
+
+        if not download_packages_df.empty:
+            st.write(
+                f"Found {len(download_packages_df)} packages with APK download data:"
+            )
+
+            # Show top packages by downloads
+            top_downloads = download_packages_df.head(20)
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                # Bar chart of top downloaded packages
+                fig = px.bar(
+                    top_downloads,
+                    x="total_downloads",
+                    y="package_id",
+                    orientation="h",
+                    title="Top 20 Packages by Downloads",
+                    labels={
+                        "total_downloads": "Total Downloads",
+                        "package_id": "Package ID",
+                    },
+                )
+                fig.update_layout(
+                    height=600, yaxis={"categoryorder": "total ascending"}
+                )
+                st.plotly_chart(fig, use_container_width=True)
+
+            with col2:
+                # Summary metrics
+                st.metric("Total Packages with Downloads", len(download_packages_df))
+                st.metric(
+                    "Total Downloads",
+                    f"{download_packages_df['total_downloads'].sum():,}",
+                )
+                st.metric(
+                    "Avg Downloads per Package",
+                    f"{download_packages_df['total_downloads'].mean():.0f}",
+                )
+
+                # Top package details
+                if not top_downloads.empty:
+                    top_package = top_downloads.iloc[0]
+                    st.markdown("**Most Downloaded Package:**")
+                    st.markdown(f"📦 `{top_package['package_id']}`")
+                    st.markdown(f"📊 {top_package['total_downloads']:,} downloads")
+                    st.markdown(f"🔢 {top_package['total_versions']} versions")
+
+            # Downloads table with links to details
+            st.subheader("📋 Package Download Statistics")
+            display_downloads_df = download_packages_df[
+                [
+                    "package_id",
+                    "total_downloads",
+                    "total_versions",
+                    "api_hits",
+                    "dates_active",
+                ]
+            ].copy()
+            display_downloads_df = display_downloads_df.rename(
+                columns={
+                    "package_id": "Package ID",
+                    "total_downloads": "Total Downloads",
+                    "total_versions": "Versions",
+                    "api_hits": "API Hits",
+                    "dates_active": "Active Dates",
+                }
+            )
+
+            st.dataframe(
+                display_downloads_df,
+                use_container_width=True,
+                column_config={
+                    "Package ID": st.column_config.TextColumn("Package ID"),
+                    "Total Downloads": st.column_config.NumberColumn(
+                        "Downloads", format="%d"
+                    ),
+                    "Versions": st.column_config.NumberColumn("Versions"),
+                    "API Hits": st.column_config.NumberColumn("API Hits", format="%d"),
+                    "Active Dates": st.column_config.NumberColumn("Active Dates"),
+                },
+            )
+
+            # Package selection for detailed view
+            st.subheader("🎯 View Detailed Package Information")
+            download_package_options = download_packages_df["package_id"].tolist()
+            selected_download_package = st.selectbox(
+                "Select a package to view detailed download statistics:",
+                options=[""] + download_package_options,
+                format_func=lambda x: "Choose a package..."
+                if x == ""
+                else f"{x} ({download_packages_df[download_packages_df['package_id'] == x]['total_downloads'].iloc[0]:,} downloads)"
+                if x in download_package_options
+                else x,
+                key="download_package_select",
+            )
+
+            if selected_download_package and selected_download_package != "":
+                if st.button(f"📦 View Details for {selected_download_package}"):
+                    # Navigate to package details page
+                    st.query_params["package"] = selected_download_package
+                    st.rerun()
+        else:
+            st.info(
+                "No packages with APK download data found in the selected date range."
+            )
+            st.markdown(
+                "*Note: Download data is tracked separately from API requests. Packages may have API activity but no recorded downloads in this dataset.*"
+            )
 
 
 def show_apps_geographic_analysis(analyzer: AppMetricsAnalyzer, dates: list):
