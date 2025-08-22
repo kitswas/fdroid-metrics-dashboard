@@ -77,20 +77,20 @@ class DataFetcher:
     def _get_apps_remote_dates(self) -> List[str]:
         """Get available app data dates from remote servers (using first server as reference)."""
         try:
-            server = self.servers[0]
-            index_url = f"{self.apps_base_url}/{server}/index.json"
-            response = requests.get(index_url, timeout=10)
-            response.raise_for_status()
-            index = response.json()
-
             dates = []
-            for filename in index:
-                try:
-                    date_str = filename.replace(".json", "")
-                    datetime.strptime(date_str, "%Y-%m-%d")  # Validate format
-                    dates.append(date_str)
-                except ValueError:
-                    continue
+            for server in self.servers:
+                index_url = f"{self.apps_base_url}/{server}/index.json"
+                response = requests.get(index_url, timeout=10)
+                response.raise_for_status()
+                index = response.json()
+
+                for filename in index:
+                    try:
+                        date_str = filename.replace(".json", "")
+                        datetime.strptime(date_str, "%Y-%m-%d")  # Validate format
+                        dates.append(date_str)
+                    except ValueError:
+                        continue
 
             return sorted(dates)
         except Exception as e:
