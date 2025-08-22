@@ -16,15 +16,19 @@ from etl.data_fetcher import DataFetcher
 OUTPUT_DIR = "processed/monthly"
 
 
-def get_last_n_months_dates(dates, n_months=2):
+def get_last_n_months_dates(dates, n_months):
     # dates: list of YYYY-MM-DD strings, sorted ascending
     months = {}
+    unique_dates = set()
     for date_str in reversed(dates):
+        if date_str in unique_dates:
+            continue
         dt = datetime.strptime(date_str, "%Y-%m-%d")
         ym = dt.strftime("%Y-%m")
         if ym not in months:
             months[ym] = []
         months[ym].append(date_str)
+        unique_dates.add(date_str)
         if len(months) >= n_months:
             # Once we have n_months, stop collecting
             break
@@ -32,7 +36,8 @@ def get_last_n_months_dates(dates, n_months=2):
     result = []
     for month_dates in months.values():
         result.extend(month_dates)
-    return sorted(result)
+    # Ensure result is unique
+    return sorted(set(result))
 
 
 def main():
@@ -50,9 +55,15 @@ def main():
         f"Found {len(app_remote_dates)} app dates, {len(search_remote_dates)} search dates."
     )
 
-    # Get last 2 months of dates for each
-    app_dates_to_fetch = get_last_n_months_dates(app_remote_dates, 2)
-    search_dates_to_fetch = get_last_n_months_dates(search_remote_dates, 2)
+    # Get last n common remote dates
+    n = 4
+    common_remote_dates = sorted(set(app_remote_dates) & set(search_remote_dates))
+    if len(common_remote_dates) < n:
+        logger.error(
+            f"Not enough common remote dates found (found {len(common_remote_dates)}). Aborting."
+        )
+        return
+    dates_to_fetch = common_remote_dates[-n:]
 
     def log_progress(progress):
         logger.info(f"Progress: {progress * 100:.1f}%")
@@ -60,19 +71,19 @@ def main():
     def log_status(msg):
         logger.info(msg)
 
-    logger.info(f"Fetching app data for dates: {app_dates_to_fetch}")
+    logger.info(f"Fetching app data for dates: {dates_to_fetch}")
     fetcher.fetch_date_range(
         "apps",
-        app_dates_to_fetch[0],
-        app_dates_to_fetch[-1],
+        dates_to_fetch[0],
+        dates_to_fetch[-1],
         progress_callback=log_progress,
         status_callback=log_status,
     )
-    logger.info(f"Fetching search data for dates: {search_dates_to_fetch}")
+    logger.info(f"Fetching search data for dates: {dates_to_fetch}")
     fetcher.fetch_date_range(
         "search",
-        search_dates_to_fetch[0],
-        search_dates_to_fetch[-1],
+        dates_to_fetch[0],
+        dates_to_fetch[-1],
         progress_callback=log_progress,
         status_callback=log_status,
     )
