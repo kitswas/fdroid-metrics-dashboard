@@ -114,7 +114,6 @@ def main():
             "total_downloads": app.get("total_downloads", 0),
             "api_hits": app.get("api_hits", 0),
             "versions": app.get("total_versions", 0),
-            "dates_active": app.get("dates_active", []),
             "search_count": search_count,
         }
         out_path = os.path.join(OUTPUT_DIR, f"{package_id}.json")
