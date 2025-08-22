@@ -3,13 +3,14 @@ Script to extract per-package monthly metrics from F-Droid app and search data.
 Output: processed/monthly/{package_id}.json
 """
 
-import os
 import json
 import logging
+import os
+from datetime import datetime
+
 from etl.analyzer_apps import AppMetricsAnalyzer
 from etl.analyzer_search import SearchMetricsAnalyzer
 from etl.data_fetcher import DataFetcher
-from datetime import datetime
 
 # --- CONFIG ---
 OUTPUT_DIR = "processed/monthly"
@@ -52,11 +53,28 @@ def main():
     # Get last 2 months of dates for each
     app_dates_to_fetch = get_last_n_months_dates(app_remote_dates, 2)
     search_dates_to_fetch = get_last_n_months_dates(search_remote_dates, 2)
+
+    def log_progress(progress):
+        logger.info(f"Progress: {progress * 100:.1f}%")
+
+    def log_status(msg):
+        logger.info(msg)
+
     logger.info(f"Fetching app data for dates: {app_dates_to_fetch}")
-    fetcher.fetch_date_range("apps", app_dates_to_fetch[0], app_dates_to_fetch[-1])
+    fetcher.fetch_date_range(
+        "apps",
+        app_dates_to_fetch[0],
+        app_dates_to_fetch[-1],
+        progress_callback=log_progress,
+        status_callback=log_status,
+    )
     logger.info(f"Fetching search data for dates: {search_dates_to_fetch}")
     fetcher.fetch_date_range(
-        "search", search_dates_to_fetch[0], search_dates_to_fetch[-1]
+        "search",
+        search_dates_to_fetch[0],
+        search_dates_to_fetch[-1],
+        progress_callback=log_progress,
+        status_callback=log_status,
     )
 
     # Find common dates locally

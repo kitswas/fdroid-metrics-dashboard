@@ -4,10 +4,9 @@ Data fetcher for F-Droid metrics that can be used within Streamlit dashboard
 
 import json
 from datetime import datetime, timedelta
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List, Optional
 
 import requests
-import streamlit as st
 
 # Import existing data fetching functions
 from etl.getdata_apps import (
@@ -31,7 +30,7 @@ from etl.getdata_search import (
 
 
 class DataFetcher:
-    """Unified data fetcher for both search and app metrics with Streamlit integration."""
+    """Unified data fetcher for both search and app metrics."""
 
     def __init__(self):
         """Initialize the data fetcher."""
@@ -71,13 +70,13 @@ class DataFetcher:
 
             return sorted(dates)
         except Exception as e:
-            st.error(f"Failed to fetch search data index: {e}")
+            # st.error(f"Failed to fetch search data index: {e}")
+            print(f"Failed to fetch search data index: {e}")
             return []
 
     def _get_apps_remote_dates(self) -> List[str]:
         """Get available app data dates from remote servers (using first server as reference)."""
         try:
-            # Use first server to get available dates
             server = self.servers[0]
             index_url = f"{self.apps_base_url}/{server}/index.json"
             response = requests.get(index_url, timeout=10)
@@ -95,7 +94,8 @@ class DataFetcher:
 
             return sorted(dates)
         except Exception as e:
-            st.error(f"Failed to fetch app data index: {e}")
+            # st.error(f"Failed to fetch app data index: {e}")
+            print(f"Failed to fetch app data index: {e}")
             return []
 
     def get_local_dates(self, data_type: str) -> List[str]:
@@ -134,9 +134,14 @@ class DataFetcher:
         return sorted(dates)
 
     def fetch_date_range(
-        self, data_type: str, start_date: str, end_date: str
+        self,
+        data_type: str,
+        start_date: str,
+        end_date: str,
+        progress_callback: Optional[Callable[[float], None]] = None,
+        status_callback: Optional[Callable[[str], None]] = None,
     ) -> Dict[str, Any]:
-        """Fetch data for a date range with progress feedback."""
+        """Fetch data for a date range with progress feedback via callbacks."""
         try:
             start_dt = datetime.strptime(start_date, "%Y-%m-%d")
             end_dt = datetime.strptime(end_date, "%Y-%m-%d")
@@ -146,7 +151,6 @@ class DataFetcher:
         if start_dt > end_dt:
             raise ValueError("Start date must be before or equal to end date")
 
-        # Reasonable date range check
         limit_days = 366 * 2  # (not more than 2 years)
         if (end_dt - start_dt).days > limit_days:
             raise ValueError(f"Date range too large. Maximum {limit_days} days allowed")
@@ -159,13 +163,22 @@ class DataFetcher:
             current_date += timedelta(days=1)
 
         if data_type == "search":
-            return self._fetch_search_dates(dates_to_fetch)
+            return self._fetch_search_dates(
+                dates_to_fetch, progress_callback, status_callback
+            )
         elif data_type == "apps":
-            return self._fetch_apps_dates(dates_to_fetch)
+            return self._fetch_apps_dates(
+                dates_to_fetch, progress_callback, status_callback
+            )
         else:
             raise ValueError("data_type must be 'search' or 'apps'")
 
-    def _fetch_search_dates(self, dates: List[str]) -> Dict[str, Any]:
+    def _fetch_search_dates(
+        self,
+        dates: List[str],
+        progress_callback: Optional[Callable[[float], None]] = None,
+        status_callback: Optional[Callable[[str], None]] = None,
+    ) -> Dict[str, Any]:
         """Fetch search data for specified dates."""
         # Create data directory if it doesn't exist
         self.search_data_dir.mkdir(parents=True, exist_ok=True)
@@ -178,14 +191,12 @@ class DataFetcher:
             "errors": [],
         }
 
-        # Create progress bar
-        progress_bar = st.progress(0)
-        status_text = st.empty()
-
         for i, date in enumerate(dates):
             progress = (i + 1) / len(dates)
-            progress_bar.progress(progress)
-            status_text.text(f"Fetching search data for {date}...")
+            if progress_callback:
+                progress_callback(progress)
+            if status_callback:
+                status_callback(f"Fetching search data for {date}...")
 
             filepath = self.search_data_dir / f"{date}.json"
 
@@ -209,11 +220,18 @@ class DataFetcher:
                 results["errors"].append(error_msg)
                 results["failed"] += 1
 
-        progress_bar.progress(1.0)
-        status_text.text("Search data fetch complete!")
+        if progress_callback:
+            progress_callback(1.0)
+        if status_callback:
+            status_callback("Search data fetch complete!")
         return results
 
-    def _fetch_apps_dates(self, dates: List[str]) -> Dict[str, Any]:
+    def _fetch_apps_dates(
+        self,
+        dates: List[str],
+        progress_callback: Optional[Callable[[float], None]] = None,
+        status_callback: Optional[Callable[[str], None]] = None,
+    ) -> Dict[str, Any]:
         """Fetch app data for specified dates from all servers."""
         # Create data directory if it doesn't exist
         self.apps_data_dir.mkdir(parents=True, exist_ok=True)
@@ -226,10 +244,6 @@ class DataFetcher:
             "errors": [],
         }
 
-        # Create progress bar
-        progress_bar = st.progress(0)
-        status_text = st.empty()
-
         total_operations = len(dates) * len(self.servers)
         current_operation = 0
 
@@ -237,8 +251,10 @@ class DataFetcher:
             for server in self.servers:
                 current_operation += 1
                 progress = current_operation / total_operations
-                progress_bar.progress(progress)
-                status_text.text(f"Fetching app data for {server} on {date}...")
+                if progress_callback:
+                    progress_callback(progress)
+                if status_callback:
+                    status_callback(f"Fetching app data for {server} on {date}...")
 
                 server_dir = self.apps_data_dir / server
                 server_dir.mkdir(parents=True, exist_ok=True)
@@ -264,8 +280,10 @@ class DataFetcher:
                     results["errors"].append(error_msg)
                     results["failed"] += 1
 
-        progress_bar.progress(1.0)
-        status_text.text("App data fetch complete!")
+        if progress_callback:
+            progress_callback(1.0)
+        if status_callback:
+            status_callback("App data fetch complete!")
         return results
 
     def get_missing_dates(

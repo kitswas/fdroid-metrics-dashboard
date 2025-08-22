@@ -118,7 +118,22 @@ def fetch_data_with_progress(
     """Fetch data with progress feedback."""
     try:
         with st.spinner(f"Fetching {data_type} data..."):
-            results = fetcher.fetch_date_range(data_type, start_date, end_date)
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+
+            def progress_callback(progress):
+                progress_bar.progress(progress)
+
+            def status_callback(msg):
+                status_text.text(msg)
+
+            results = fetcher.fetch_date_range(
+                data_type,
+                start_date,
+                end_date,
+                progress_callback=progress_callback,
+                status_callback=status_callback,
+            )
 
         # Show results
         st.subheader("📋 Fetch Results")
