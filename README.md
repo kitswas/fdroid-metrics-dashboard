@@ -24,6 +24,20 @@ A comprehensive dashboard for analyzing F-Droid app store metrics, including sea
 - Server performance comparison
 - Geographic distribution of downloads
 
+### Badges (via Shields.io)
+
+You can add badges to your README file to display various metrics (monthly) for your package.  
+A GitHub Actions cronjob runs daily to recompute these metrics.
+
+```markdown
+![Downloads last month](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fgithub.com%2Fkitswas%2Ffdroid-metrics-dashboard%2Fraw%2Frefs%2Fheads%2Fmain%2Fprocessed%2Fmonthly%2Fio.github.kitswas.virtualgamepadmobile.json&query=%24.total_downloads&logo=fdroid&label=Downloads%20last%20month)
+![Searches last month](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fgithub.com%2Fkitswas%2Ffdroid-metrics-dashboard%2Fraw%2Frefs%2Fheads%2Fmain%2Fprocessed%2Fmonthly%2Fio.github.kitswas.virtualgamepadmobile.json&query=%24.search_count&logo=fdroid&label=Searches%20last%20month)
+```
+
+Replace `io.github.kitswas.virtualgamepadmobile` with your package ID.
+
+You can find the processed data files in the `processed` directory. (Search for your package ID)
+
 ## Hosted Dashboard (via Streamlit)
 
 <https://fdroid-metrics.streamlit.app/>
