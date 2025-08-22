@@ -1,0 +1,38 @@
+name: Extract Monthly Package JSON
+
+on:
+  schedule:
+    - cron: '0 20 * * *' # Run daily at 20:00 UTC
+  workflow_dispatch:
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install UV
+        run: pip install uv
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Delete old processed files
+        run: rm -rf processed/monthly
+
+      - name: Run extraction script
+        run: uv run python extract_monthly_package_json.py
+
+      - name: Commit changes
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add processed/monthly
+          git commit -m "Update monthly package stats JSON"
+          git push
