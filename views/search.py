@@ -12,7 +12,7 @@ from etl.analyzer_search import SearchMetricsAnalyzer
 from etl.data_fetcher_ui import show_data_fetcher, show_quick_fetch_buttons
 
 
-def show_search_page():
+def show_search_page() -> None:
     """Show the search metrics page."""
     st.title("🔍 F-Droid Search Metrics")
     st.markdown(
@@ -119,7 +119,7 @@ def show_search_page():
         show_search_technical_analysis(analyzer, selected_dates)
 
 
-def show_search_overview(analyzer: SearchMetricsAnalyzer, dates: list):
+def show_search_overview(analyzer: SearchMetricsAnalyzer, dates: list) -> None:
     """Show overview metrics."""
     st.header("📈 Search Overview")
 
@@ -216,7 +216,7 @@ def show_search_overview(analyzer: SearchMetricsAnalyzer, dates: list):
             st.plotly_chart(fig, use_container_width=True)
 
 
-def show_query_analysis(analyzer: SearchMetricsAnalyzer, dates: list):
+def show_query_analysis(analyzer: SearchMetricsAnalyzer, dates: list) -> None:
     """Show detailed query analysis."""
     st.header("🔍 Search Query Analysis")
     st.info(
@@ -287,7 +287,9 @@ def show_query_analysis(analyzer: SearchMetricsAnalyzer, dates: list):
         )
 
 
-def show_search_geographic_analysis(analyzer: SearchMetricsAnalyzer, dates: list):
+def show_search_geographic_analysis(
+    analyzer: SearchMetricsAnalyzer, dates: list
+) -> None:
     """Show geographic analysis."""
     st.header("🌍 Search Geographic Analysis")
 
@@ -341,7 +343,9 @@ def show_search_geographic_analysis(analyzer: SearchMetricsAnalyzer, dates: list
         st.dataframe(display_df, use_container_width=True)
 
 
-def show_search_technical_analysis(analyzer: SearchMetricsAnalyzer, dates: list):
+def show_search_technical_analysis(
+    analyzer: SearchMetricsAnalyzer, dates: list
+) -> None:
     """Show technical analysis including errors and paths."""
     st.header("🛠️ Search Technical Analysis")
 

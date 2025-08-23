@@ -9,7 +9,7 @@ import streamlit as st
 from etl.data_fetcher import DataFetcher
 
 
-def show_data_fetcher(data_type: str, key_prefix: str = ""):
+def show_data_fetcher(data_type: str, key_prefix: str = "") -> bool:
     """Show data fetching interface for search or app data."""
     st.subheader(f"📥 Fetch {data_type.title()} Data")
 
@@ -114,17 +114,17 @@ def show_data_fetcher(data_type: str, key_prefix: str = ""):
 
 def fetch_data_with_progress(
     fetcher: DataFetcher, data_type: str, start_date: str, end_date: str
-):
+) -> bool:
     """Fetch data with progress feedback."""
     try:
         with st.spinner(f"Fetching {data_type} data..."):
             progress_bar = st.progress(0)
             status_text = st.empty()
 
-            def progress_callback(progress):
+            def progress_callback(progress: float) -> None:
                 progress_bar.progress(progress)
 
-            def status_callback(msg):
+            def status_callback(msg: str) -> None:
                 status_text.text(msg)
 
             results = fetcher.fetch_date_range(
@@ -168,7 +168,7 @@ def fetch_data_with_progress(
         return False
 
 
-def show_quick_fetch_buttons(data_type: str, key_prefix: str = ""):
+def show_quick_fetch_buttons(data_type: str, key_prefix: str = "") -> bool:
     """Show quick fetch buttons for common time ranges."""
     st.subheader("⚡ Quick Fetch")
     st.markdown("Fetch data for common time ranges:")

@@ -5,7 +5,7 @@ F-Droid Metrics Dashboard - Main Page
 import streamlit as st
 
 
-def main():
+def main() -> None:
     """Main dashboard application."""
     st.set_page_config(
         page_title="F-Droid Metrics Dashboard",

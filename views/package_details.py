@@ -14,7 +14,7 @@ from etl.fdroid_metadata import FDroidMetadataFetcher
 
 def show_package_details_page(
     package_id: str, analyzer: AppMetricsAnalyzer, dates: list
-):
+) -> None:
     """Show detailed information for a specific package."""
 
     st.title(f"📦 Package Details: {package_id}")
@@ -426,7 +426,7 @@ def show_package_details_page(
             st.rerun()
 
 
-def show_package_search_and_select(analyzer: AppMetricsAnalyzer, dates: list):
+def show_package_search_and_select(analyzer: AppMetricsAnalyzer, dates: list) -> None:
     """Show package search interface when no specific package is selected."""
 
     st.subheader("🔍 Search Packages")

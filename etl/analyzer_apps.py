@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class AppMetricsAnalyzer:
     """Analyzer for F-Droid app metrics data from HTTP servers."""
 
-    def __init__(self, data_dir: pathlib.Path | None = None):
+    def __init__(self, data_dir: pathlib.Path | None = None) -> None:
         """Initialize analyzer with raw data directory."""
         if data_dir is None:
             data_dir = DATA_DIR

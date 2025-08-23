@@ -33,7 +33,7 @@ from etl.getdata_search import (
 class DataFetcher:
     """Unified data fetcher for both search and app metrics."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the data fetcher."""
         self.apps_base_url = APPS_BASE_URL
         self.search_base_url = SEARCH_BASE_URL

@@ -16,7 +16,7 @@ from etl.data_fetcher import DataFetcher
 OUTPUT_DIR = "processed/monthly"
 
 
-def get_last_n_months_dates(dates, n_months):
+def get_last_n_months_dates(dates: list[str], n_months: int) -> list[str]:
     # dates: list of YYYY-MM-DD strings, sorted ascending
     months = {}
     unique_dates = set()
@@ -40,7 +40,7 @@ def get_last_n_months_dates(dates, n_months):
     return sorted(set(result))
 
 
-def main():
+def main() -> None:
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
     )
@@ -65,10 +65,10 @@ def main():
         return
     dates_to_fetch = common_remote_dates[-n:]
 
-    def log_progress(progress):
+    def log_progress(progress: float) -> None:
         logger.info(f"Progress: {progress * 100:.1f}%")
 
-    def log_status(msg):
+    def log_status(msg: str) -> None:
         logger.info(msg)
 
     logger.info(f"Fetching app data for dates: {dates_to_fetch}")

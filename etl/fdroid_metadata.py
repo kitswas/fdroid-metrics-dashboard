@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class FDroidMetadataFetcher:
     """Fetches F-Droid package metadata from the fdroiddata repository."""
 
-    def __init__(self, cache_dir: str | None = None):
+    def __init__(self, cache_dir: str | None = None) -> None:
         """
         Initialize the metadata fetcher.
 
@@ -45,7 +45,7 @@ class FDroidMetadataFetcher:
         # Cache for parsed metadata
         self._metadata_cache: dict[str, dict] = {}
 
-    def _rate_limit(self):
+    def _rate_limit(self) -> None:
         """Implement rate limiting to be respectful to GitLab."""
         current_time = time.time()
         time_since_last = current_time - self.last_request_time
@@ -279,7 +279,7 @@ class FDroidMetadataFetcher:
         else:
             return "Unknown"
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Clear the metadata cache."""
         if self.cache_dir.exists():
             for cache_file in self.cache_dir.glob("*.yml"):

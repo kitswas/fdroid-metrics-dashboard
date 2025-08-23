@@ -18,7 +18,7 @@ from etl.getdata_apps import SERVERS
 logger = logging.getLogger(__name__)
 
 
-def show_apps_page():
+def show_apps_page() -> None:
     """Show the app metrics page."""
     st.title("📱 F-Droid App Metrics")
     st.markdown(
@@ -138,7 +138,7 @@ def show_apps_page():
         show_apps_technical_analysis(analyzer, selected_dates)
 
 
-def show_apps_overview(analyzer: AppMetricsAnalyzer, dates: list):
+def show_apps_overview(analyzer: AppMetricsAnalyzer, dates: list) -> None:
     """Show overview metrics."""
     st.header("📈 App Metrics Overview")
 
@@ -253,7 +253,7 @@ def show_apps_overview(analyzer: AppMetricsAnalyzer, dates: list):
             st.plotly_chart(fig, use_container_width=True)
 
 
-def show_path_analysis(analyzer: AppMetricsAnalyzer, dates: list):
+def show_path_analysis(analyzer: AppMetricsAnalyzer, dates: list) -> None:
     """Show detailed path analysis."""
     st.header("📂 Request Path Analysis")
     st.info(
@@ -302,7 +302,7 @@ def show_path_analysis(analyzer: AppMetricsAnalyzer, dates: list):
         st.subheader("Path Categories")
 
         # Categorize paths
-        def categorize_path(path):
+        def categorize_path(path: str) -> str:
             if path == "/":
                 return "Root"
             elif "/repo/" in path and ".jar" in path:
@@ -379,7 +379,7 @@ def show_path_analysis(analyzer: AppMetricsAnalyzer, dates: list):
         )
 
 
-def show_package_analysis(analyzer: AppMetricsAnalyzer, dates: list):
+def show_package_analysis(analyzer: AppMetricsAnalyzer, dates: list) -> None:
     """Show F-Droid package API analysis."""
     st.header("📦 F-Droid Package API Analysis")
     st.markdown(
@@ -436,7 +436,7 @@ def show_package_analysis(analyzer: AppMetricsAnalyzer, dates: list):
 
         # Initialize metadata fetcher with caching
         @st.cache_resource
-        def get_metadata_fetcher():
+        def get_metadata_fetcher() -> FDroidMetadataFetcher:
             """Get a cached instance of the metadata fetcher."""
             return FDroidMetadataFetcher(cache_dir="./cache/metadata")
 
@@ -458,7 +458,7 @@ def show_package_analysis(analyzer: AppMetricsAnalyzer, dates: list):
                 st.success("Cache cleared!")
                 st.rerun()
 
-        def categorize_package(package_name):
+        def categorize_package(package_name: str) -> str:
             """Get the real F-Droid category for a package, with fallback to pattern-based categorization."""
             return metadata_fetcher.get_primary_category(package_name)
 
@@ -729,7 +729,7 @@ def show_package_analysis(analyzer: AppMetricsAnalyzer, dates: list):
             )
 
 
-def show_apps_geographic_analysis(analyzer: AppMetricsAnalyzer, dates: list):
+def show_apps_geographic_analysis(analyzer: AppMetricsAnalyzer, dates: list) -> None:
     """Show geographic analysis."""
     st.header("🌍 App Downloads Geographic Analysis")
 
@@ -783,7 +783,7 @@ def show_apps_geographic_analysis(analyzer: AppMetricsAnalyzer, dates: list):
         st.dataframe(display_df, use_container_width=True)
 
 
-def show_server_comparison(analyzer: AppMetricsAnalyzer, dates: list):
+def show_server_comparison(analyzer: AppMetricsAnalyzer, dates: list) -> None:
     """Show server comparison analysis."""
     st.header("🖥️ Server Comparison")
 
@@ -865,7 +865,7 @@ def show_server_comparison(analyzer: AppMetricsAnalyzer, dates: list):
             st.plotly_chart(fig, use_container_width=True)
 
 
-def show_apps_technical_analysis(analyzer: AppMetricsAnalyzer, dates: list):
+def show_apps_technical_analysis(analyzer: AppMetricsAnalyzer, dates: list) -> None:
     """Show technical analysis including errors and detailed metrics."""
     st.header("🛠️ App Metrics Technical Analysis")
 
