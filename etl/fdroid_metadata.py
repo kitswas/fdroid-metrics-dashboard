@@ -5,7 +5,6 @@ F-Droid metadata fetcher for getting real package categories and information.
 import logging
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Set
 from urllib.parse import quote
 
 import requests
@@ -19,7 +18,7 @@ logger = logging.getLogger(__name__)
 class FDroidMetadataFetcher:
     """Fetches F-Droid package metadata from the fdroiddata repository."""
 
-    def __init__(self, cache_dir: Optional[str] = None):
+    def __init__(self, cache_dir: str | None = None):
         """
         Initialize the metadata fetcher.
 
@@ -44,7 +43,7 @@ class FDroidMetadataFetcher:
         self.min_request_interval = 0.1  # 100ms between requests
 
         # Cache for parsed metadata
-        self._metadata_cache: Dict[str, dict] = {}
+        self._metadata_cache: dict[str, dict] = {}
 
     def _rate_limit(self):
         """Implement rate limiting to be respectful to GitLab."""
@@ -58,7 +57,7 @@ class FDroidMetadataFetcher:
         """Get the cache file path for a package."""
         return self.cache_dir / f"{package_id}.yml"
 
-    def _fetch_metadata_from_remote(self, package_id: str) -> Optional[dict]:
+    def _fetch_metadata_from_remote(self, package_id: str) -> dict | None:
         """
         Fetch metadata from the remote fdroiddata repository.
 
@@ -105,7 +104,7 @@ class FDroidMetadataFetcher:
             logger.error(f"Unexpected error fetching metadata for {package_id}: {e}")
             return None
 
-    def _load_cached_metadata(self, package_id: str) -> Optional[dict]:
+    def _load_cached_metadata(self, package_id: str) -> dict | None:
         """
         Load metadata from cache if available.
 
@@ -119,7 +118,7 @@ class FDroidMetadataFetcher:
 
         if cache_path.exists():
             try:
-                with open(cache_path, "r", encoding="utf-8") as f:
+                with open(cache_path, encoding="utf-8") as f:
                     return yaml.safe_load(f)
             except Exception as e:
                 logger.warning(f"Error reading cached metadata for {package_id}: {e}")
@@ -133,7 +132,7 @@ class FDroidMetadataFetcher:
 
     def get_package_metadata(
         self, package_id: str, use_cache: bool = True
-    ) -> Optional[dict]:
+    ) -> dict | None:
         """
         Get metadata for a specific package.
 
@@ -165,7 +164,7 @@ class FDroidMetadataFetcher:
 
     def get_package_categories(
         self, package_id: str, use_cache: bool = True
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Get categories for a specific package.
 
@@ -188,8 +187,8 @@ class FDroidMetadataFetcher:
         return []
 
     def get_bulk_categories(
-        self, package_ids: Set[str], use_cache: bool = True
-    ) -> Dict[str, List[str]]:
+        self, package_ids: set[str], use_cache: bool = True
+    ) -> dict[str, list[str]]:
         """
         Get categories for multiple packages efficiently.
 
@@ -287,7 +286,7 @@ class FDroidMetadataFetcher:
                 cache_file.unlink()
         self._metadata_cache.clear()
 
-    def get_cache_stats(self) -> Dict[str, int]:
+    def get_cache_stats(self) -> dict[str, int]:
         """Get statistics about the cache."""
         cache_files = (
             list(self.cache_dir.glob("*.yml")) if self.cache_dir.exists() else []

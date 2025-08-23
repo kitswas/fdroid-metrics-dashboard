@@ -14,3 +14,13 @@ dependencies = [
 
 [dependency-groups]
 dev = ["ruff>=0.11.2"]
+
+[tool.ruff.lint]
+extend-select = [
+    "ANN", # type annotations
+    "UP",  # pyupgrade
+    "PLE", # pylint errors
+]
+
+[tool.ruff.lint.per-file-ignores]
+"test/**/*.py" = ["ANN"]

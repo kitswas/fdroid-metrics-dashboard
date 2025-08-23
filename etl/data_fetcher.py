@@ -3,8 +3,9 @@ Data fetcher for F-Droid metrics that can be used within Streamlit dashboard
 """
 
 import json
+from collections.abc import Callable
 from datetime import datetime, timedelta
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 import requests
 
@@ -41,7 +42,7 @@ class DataFetcher:
         self.apps_data_dir = APPS_DATA_DIR
         self.search_data_dir = SEARCH_DATA_DIR
 
-    def get_available_remote_dates(self, data_type: str) -> List[str]:
+    def get_available_remote_dates(self, data_type: str) -> list[str]:
         """Get available dates from remote servers."""
         if data_type == "search":
             return self._get_search_remote_dates()
@@ -50,7 +51,7 @@ class DataFetcher:
         else:
             raise ValueError("data_type must be 'search' or 'apps'")
 
-    def _get_search_remote_dates(self) -> List[str]:
+    def _get_search_remote_dates(self) -> list[str]:
         """Get available search data dates from remote server."""
         try:
             response = requests.get(self.search_index_url, timeout=10)
@@ -74,7 +75,7 @@ class DataFetcher:
             print(f"Failed to fetch search data index: {e}")
             return []
 
-    def _get_apps_remote_dates(self) -> List[str]:
+    def _get_apps_remote_dates(self) -> list[str]:
         """Get available app data dates from remote servers (using first server as reference)."""
         try:
             dates = []
@@ -98,7 +99,7 @@ class DataFetcher:
             print(f"Failed to fetch app data index: {e}")
             return []
 
-    def get_local_dates(self, data_type: str) -> List[str]:
+    def get_local_dates(self, data_type: str) -> list[str]:
         """Get available dates from local data files."""
         if data_type == "search":
             data_dir = self.search_data_dir
@@ -138,9 +139,9 @@ class DataFetcher:
         data_type: str,
         start_date: str,
         end_date: str,
-        progress_callback: Optional[Callable[[float], None]] = None,
-        status_callback: Optional[Callable[[str], None]] = None,
-    ) -> Dict[str, Any]:
+        progress_callback: Callable[[float], None] | None = None,
+        status_callback: Callable[[str], None] | None = None,
+    ) -> dict[str, Any]:
         """Fetch data for a date range with progress feedback via callbacks."""
         try:
             start_dt = datetime.strptime(start_date, "%Y-%m-%d")
@@ -175,10 +176,10 @@ class DataFetcher:
 
     def _fetch_search_dates(
         self,
-        dates: List[str],
-        progress_callback: Optional[Callable[[float], None]] = None,
-        status_callback: Optional[Callable[[str], None]] = None,
-    ) -> Dict[str, Any]:
+        dates: list[str],
+        progress_callback: Callable[[float], None] | None = None,
+        status_callback: Callable[[str], None] | None = None,
+    ) -> dict[str, Any]:
         """Fetch search data for specified dates."""
         # Create data directory if it doesn't exist
         self.search_data_dir.mkdir(parents=True, exist_ok=True)
@@ -228,10 +229,10 @@ class DataFetcher:
 
     def _fetch_apps_dates(
         self,
-        dates: List[str],
-        progress_callback: Optional[Callable[[float], None]] = None,
-        status_callback: Optional[Callable[[str], None]] = None,
-    ) -> Dict[str, Any]:
+        dates: list[str],
+        progress_callback: Callable[[float], None] | None = None,
+        status_callback: Callable[[str], None] | None = None,
+    ) -> dict[str, Any]:
         """Fetch app data for specified dates from all servers."""
         # Create data directory if it doesn't exist
         self.apps_data_dir.mkdir(parents=True, exist_ok=True)
@@ -288,7 +289,7 @@ class DataFetcher:
 
     def get_missing_dates(
         self, data_type: str, start_date: str, end_date: str
-    ) -> List[str]:
+    ) -> list[str]:
         """Get list of dates that are missing locally within a date range."""
         start_dt = datetime.strptime(start_date, "%Y-%m-%d")
         end_dt = datetime.strptime(end_date, "%Y-%m-%d")
@@ -306,7 +307,7 @@ class DataFetcher:
         # Return missing dates
         return [date for date in all_dates if date not in local_dates]
 
-    def check_data_availability(self, data_type: str) -> Dict[str, Any]:
+    def check_data_availability(self, data_type: str) -> dict[str, Any]:
         """Check data availability both locally and remotely."""
         local_dates = self.get_local_dates(data_type)
         remote_dates = self.get_available_remote_dates(data_type)

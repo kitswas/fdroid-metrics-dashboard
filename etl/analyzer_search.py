@@ -6,7 +6,6 @@ import json
 import logging
 import pathlib
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 
@@ -18,7 +17,7 @@ logger = logging.getLogger(__name__)
 class SearchMetricsAnalyzer:
     """Analyzer for F-Droid search metrics data."""
 
-    def __init__(self, data_dir: Optional[pathlib.Path] = None):
+    def __init__(self, data_dir: pathlib.Path | None = None):
         """Initialize analyzer with raw data directory."""
         if data_dir is None:
             data_dir = DATA_DIR
@@ -26,7 +25,7 @@ class SearchMetricsAnalyzer:
         self._cache = {}
         self._cache_size_limit = 1000
 
-    def get_available_dates(self) -> List[str]:
+    def get_available_dates(self) -> list[str]:
         """Get list of available data dates."""
         dates = []
         for file in self.data_dir.glob("*.json"):
@@ -40,7 +39,7 @@ class SearchMetricsAnalyzer:
                     continue
         return sorted(dates)
 
-    def load_data(self, date: str) -> Dict:
+    def load_data(self, date: str) -> dict:
         """Load data for a specific date."""
         if date in self._cache:
             return self._cache[date]
@@ -49,7 +48,7 @@ class SearchMetricsAnalyzer:
         if not file_path.exists():
             raise FileNotFoundError(f"No data found for date {date}")
 
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             data = json.load(f)
 
         # Simple cache size management - remove oldest entries if cache is too large
@@ -61,7 +60,7 @@ class SearchMetricsAnalyzer:
         self._cache[date] = data
         return data
 
-    def get_daily_summary(self, date: str) -> Dict:
+    def get_daily_summary(self, date: str) -> dict:
         """Get daily summary statistics."""
         data = self.load_data(date)
 
@@ -81,7 +80,7 @@ class SearchMetricsAnalyzer:
 
         return summary
 
-    def get_time_series_data(self, dates: Optional[List[str]] = None) -> pd.DataFrame:
+    def get_time_series_data(self, dates: list[str] | None = None) -> pd.DataFrame:
         """Get time series data for multiple dates."""
         if dates is None:
             dates = self.get_available_dates()
@@ -108,7 +107,7 @@ class SearchMetricsAnalyzer:
 
         return pd.DataFrame(records).sort_values("date")
 
-    def get_query_analysis(self, dates: Optional[List[str]] = None) -> pd.DataFrame:
+    def get_query_analysis(self, dates: list[str] | None = None) -> pd.DataFrame:
         """
         Analyze search queries across multiple dates.
 
@@ -169,7 +168,7 @@ class SearchMetricsAnalyzer:
         df = pd.DataFrame(list(all_queries.values()))
         return df.sort_values("total_hits", ascending=False)
 
-    def get_country_analysis(self, dates: Optional[List[str]] = None) -> pd.DataFrame:
+    def get_country_analysis(self, dates: list[str] | None = None) -> pd.DataFrame:
         """
         Analyze hits by country across multiple dates.
 
@@ -219,7 +218,7 @@ class SearchMetricsAnalyzer:
         df = pd.DataFrame(list(country_data.values()))
         return df.sort_values("total_hits", ascending=False)
 
-    def _get_top_items(self, data: Dict, limit: int) -> List[Tuple[str, int]]:
+    def _get_top_items(self, data: dict, limit: int) -> list[tuple[str, int]]:
         """Get top N items from a dictionary by value."""
         if not data:
             return []
