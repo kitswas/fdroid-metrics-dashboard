@@ -74,6 +74,12 @@ def show_package_details_page(
                     st.markdown(f"**Categories:** {', '.join(categories)}")
                 if "License" in metadata:
                     st.markdown(f"**License:** {metadata['License']}")
+                st.link_button(
+                    "View app on F-Droid",
+                    icon=":material/open_in_new:",
+                    type="primary",
+                    url=f"https://f-droid.org/packages/{package_id}",
+                )
 
             with col2:
                 if "WebSite" in metadata:
