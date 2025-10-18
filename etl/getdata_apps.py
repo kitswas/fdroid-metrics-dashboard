@@ -1,12 +1,12 @@
 """
-Download app metrics data from F-Droid HTTP servers
+Download app metrics data from F-Droid HTTP servers based on date range
 """
 
 import argparse
 import json
 import logging
 import pathlib
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import requests as re
 
@@ -34,35 +34,35 @@ def fetch_index(server: str) -> list[str]:
     return index
 
 
-def filter_files_for_month(index: list[str], year: int, month: int) -> list[str]:
-    """Filter files for a specific month and year."""
-    month_files = []
+def filter_files_for_date_range(
+    index: list[str], start_date: datetime, end_date: datetime
+) -> list[str]:
+    """Filter files for a specific date range.
+
+    Note: Each date file represents cumulative data since the previous date (usually weekly).
+    """
+    date_files = []
     for filename in index:
         try:
             # Parse date from filename (format: YYYY-MM-DD.json)
             date_str = filename.replace(".json", "")
             file_date = datetime.strptime(date_str, "%Y-%m-%d")
 
-            if file_date.year == year and file_date.month == month:
-                month_files.append(filename)
+            if start_date <= file_date <= end_date:
+                date_files.append(filename)
         except ValueError:
             # Skip files that don't match the expected date format
             continue
 
-    return sorted(month_files)
+    return sorted(date_files)
 
 
 def download_file(server: str, filename: str) -> bool:
-    """Download a single data file for a server."""
+    """Download a single data file for a server, overwriting if it exists."""
     url = f"{BASE_URL}/{server}/{filename}"
     server_dir = SUB_DATA_DIR / server
     server_dir.mkdir(parents=True, exist_ok=True)
     filepath = server_dir / filename
-
-    # Check if file already exists
-    if filepath.exists():
-        logger.debug(f"{server}/{filename} already exists, skipping")
-        return True
 
     try:
         logger.info(f"Downloading {server}/{filename}...")
@@ -79,8 +79,15 @@ def download_file(server: str, filename: str) -> bool:
         return False
 
 
-def download_month_data(year: int, month: int) -> None:
-    """Download all app metrics data for a specific month from all servers."""
+def download_date_range_data(start_date: datetime, end_date: datetime) -> None:
+    """Download all app metrics data for a specific date range from all servers.
+
+    Args:
+        start_date: Start date of the range (inclusive)
+        end_date: End date of the range (inclusive)
+
+    Note: Each date file represents cumulative data since the previous date.
+    """
     # Create data directory if it doesn't exist
     SUB_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -96,19 +103,21 @@ def download_month_data(year: int, month: int) -> None:
             # Fetch index for this server
             index = fetch_index(server)
 
-            # Filter files for the specified month
-            month_files = filter_files_for_month(index, year, month)
+            # Filter files for the specified date range
+            date_files = filter_files_for_date_range(index, start_date, end_date)
 
-            if not month_files:
-                logger.info(f"No files found for {server} in {year}-{month:02d}")
+            if not date_files:
+                logger.info(
+                    f"No files found for {server} in date range {start_date.date()} to {end_date.date()}"
+                )
                 continue
 
             # Download files for this server
-            logger.info(f"Downloading {len(month_files)} files for {server}...")
+            logger.info(f"Downloading {len(date_files)} files for {server}...")
             successful = 0
             failed = 0
 
-            for filename in month_files:
+            for filename in date_files:
                 if download_file(server, filename):
                     successful += 1
                 else:
@@ -136,26 +145,64 @@ def download_month_data(year: int, month: int) -> None:
         logger.warning(f"✗ {total_failed} files failed to download")
 
 
+def download_month_data(year: int, month: int) -> None:
+    """Download all app metrics data for a specific month from all servers (legacy function)."""
+    # Convert year/month to date range
+    start_date = datetime(year, month, 1)
+    if month == 12:
+        end_date = datetime(year + 1, 1, 1)
+    else:
+        end_date = datetime(year, month + 1, 1)
+
+    # Adjust end_date to last day of month
+    end_date = end_date.replace(day=1) - timedelta(days=1)
+    end_date = end_date.replace(hour=23, minute=59, second=59)
+
+    download_date_range_data(start_date, end_date)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Download FDroid app metrics data for a specific month from HTTP servers",
+        description="Download FDroid app metrics data from HTTP servers for a specific date range",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        epilog="Examples:\n"
+        "  %(prog)s --start 2024-09-01 --end 2024-09-30\n"
+        "  %(prog)s 2024 9  # Download September 2024 (legacy)\n"
+        "  %(prog)s  # Download current month",
     )
 
     # Default to current month
     now = datetime.now()
 
+    # Legacy arguments for backward compatibility
     parser.add_argument(
-        "year", type=int, nargs="?", default=now.year, help="Year to download data for"
+        "year",
+        type=int,
+        nargs="?",
+        help="Year to download data for (legacy, use --start/--end instead)",
     )
 
     parser.add_argument(
         "month",
         type=int,
         nargs="?",
-        default=now.month,
         choices=range(1, 13),
-        help="Month to download data for (1-12)",
+        help="Month to download data for 1-12 (legacy, use --start/--end instead)",
+    )
+
+    # New date range arguments
+    parser.add_argument(
+        "--start",
+        "--start-date",
+        type=str,
+        help="Start date in YYYY-MM-DD format (inclusive)",
+    )
+
+    parser.add_argument(
+        "--end",
+        "--end-date",
+        type=str,
+        help="End date in YYYY-MM-DD format (inclusive)",
     )
 
     parser.add_argument(
@@ -171,5 +218,29 @@ if __name__ == "__main__":
     log_level = logging.DEBUG if args.verbose else logging.INFO
     logging.basicConfig(level=log_level, format="%(levelname)s: %(message)s")
 
-    logger.info(f"Downloading app metrics data for {args.year}-{args.month:02d}")
-    download_month_data(args.year, args.month)
+    # Determine which mode to use
+    if args.start or args.end:
+        # New date range mode
+        if not args.start or not args.end:
+            parser.error("Both --start and --end must be provided together")
+
+        try:
+            start_date = datetime.strptime(args.start, "%Y-%m-%d")
+            end_date = datetime.strptime(args.end, "%Y-%m-%d")
+        except ValueError as e:
+            parser.error(f"Invalid date format. Use YYYY-MM-DD: {e}")
+
+        if start_date > end_date:
+            parser.error("Start date must be before or equal to end date")
+
+        logger.info(
+            f"Downloading app metrics data for date range {start_date.date()} to {end_date.date()}"
+        )
+        download_date_range_data(start_date, end_date)
+    else:
+        # Legacy month mode
+        year = args.year if args.year else now.year
+        month = args.month if args.month else now.month
+
+        logger.info(f"Downloading app metrics data for {year}-{month:02d}")
+        download_month_data(year, month)

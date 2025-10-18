@@ -142,7 +142,13 @@ class DataFetcher:
         progress_callback: Callable[[float], None] | None = None,
         status_callback: Callable[[str], None] | None = None,
     ) -> dict[str, Any]:
-        """Fetch data for a date range with progress feedback via callbacks."""
+        """Fetch data for a date range with progress feedback via callbacks.
+
+        This method fetches the index.json first to determine available dates,
+        then filters by the provided date range to download only available files.
+
+        Note: Data files represent cumulative metrics since the previous date (usually weekly).
+        """
         try:
             start_dt = datetime.strptime(start_date, "%Y-%m-%d")
             end_dt = datetime.strptime(end_date, "%Y-%m-%d")
@@ -156,12 +162,24 @@ class DataFetcher:
         if (end_dt - start_dt).days > limit_days:
             raise ValueError(f"Date range too large. Maximum {limit_days} days allowed")
 
-        # Generate list of dates to fetch
-        dates_to_fetch = []
-        current_date = start_dt
-        while current_date <= end_dt:
-            dates_to_fetch.append(current_date.strftime("%Y-%m-%d"))
-            current_date += timedelta(days=1)
+        # Get available dates from index.json and filter by date range
+        available_dates = self.get_available_remote_dates(data_type)
+        dates_to_fetch = [
+            date for date in available_dates if start_date <= date <= end_date
+        ]
+
+        if not dates_to_fetch:
+            if status_callback:
+                status_callback(
+                    f"No data available for date range {start_date} to {end_date}"
+                )
+            return {
+                "total_files": 0,
+                "successful": 0,
+                "failed": 0,
+                "skipped": 0,
+                "errors": ["No data files available in the specified date range"],
+            }
 
         if data_type == "search":
             return self._fetch_search_dates(
@@ -180,7 +198,7 @@ class DataFetcher:
         progress_callback: Callable[[float], None] | None = None,
         status_callback: Callable[[str], None] | None = None,
     ) -> dict[str, Any]:
-        """Fetch search data for specified dates."""
+        """Fetch search data for specified dates, overwriting existing files."""
         # Create data directory if it doesn't exist
         self.search_data_dir.mkdir(parents=True, exist_ok=True)
 
@@ -200,11 +218,6 @@ class DataFetcher:
                 status_callback(f"Fetching search data for {date}...")
 
             filepath = self.search_data_dir / f"{date}.json"
-
-            # Check if file already exists
-            if filepath.exists():
-                results["skipped"] += 1
-                continue
 
             try:
                 url = f"{self.search_base_url}/{date}.json"
@@ -233,7 +246,7 @@ class DataFetcher:
         progress_callback: Callable[[float], None] | None = None,
         status_callback: Callable[[str], None] | None = None,
     ) -> dict[str, Any]:
-        """Fetch app data for specified dates from all servers."""
+        """Fetch app data for specified dates from all servers, overwriting existing files."""
         # Create data directory if it doesn't exist
         self.apps_data_dir.mkdir(parents=True, exist_ok=True)
 
@@ -260,11 +273,6 @@ class DataFetcher:
                 server_dir = self.apps_data_dir / server
                 server_dir.mkdir(parents=True, exist_ok=True)
                 filepath = server_dir / f"{date}.json"
-
-                # Check if file already exists
-                if filepath.exists():
-                    results["skipped"] += 1
-                    continue
 
                 try:
                     url = f"{self.apps_base_url}/{server}/{date}.json"

@@ -63,18 +63,23 @@ uv sync --link-mode=symlink # Install the dependencies, use -U to update
 
 ## Data Fetching
 
+The data fetchers have been revamped to support flexible date range queries. Each data file represents cumulative metrics since the previous date (usually weekly snapshots).
+
 ### Search Metrics Data
 
 Download F-Droid search metrics data:
 
 ```bash
-# Download current month's search data
+# Download data for a specific date range (recommended)
+uv run python -m etl.getdata_search --start 2024-09-01 --end 2024-09-30
+
+# Download current month (legacy mode)
 uv run python -m etl.getdata_search
 
-# Download specific year and month
+# Download specific month (legacy mode)
 uv run python -m etl.getdata_search 2024 12
 
-# Or ask for help
+# Get help
 uv run python -m etl.getdata_search --help
 ```
 
@@ -83,15 +88,25 @@ uv run python -m etl.getdata_search --help
 Download F-Droid app metrics data from HTTP servers:
 
 ```bash
-# Download current month's app data
+# Download data for a specific date range (recommended)
+uv run python -m etl.getdata_apps --start 2024-09-01 --end 2024-09-30
+
+# Download current month (legacy mode)
 uv run python -m etl.getdata_apps
 
-# Download specific year and month
+# Download specific month (legacy mode)
 uv run python -m etl.getdata_apps 2024 6
 
-# Or ask for help
+# Get help
 uv run python -m etl.getdata_apps --help
 ```
+
+**Note**: The fetchers will automatically:
+
+1. Fetch the `index.json` from each server
+2. Filter available dates that fall within your specified range
+3. Download only the matching date files (e.g., `2025-09-29.json`)
+4. Skip files that already exist locally
 
 ## Dashboard
 

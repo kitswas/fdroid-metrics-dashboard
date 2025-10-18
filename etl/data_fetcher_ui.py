@@ -26,7 +26,7 @@ def show_data_fetcher(data_type: str, key_prefix: str = "") -> bool:
 
             col1, col2 = st.columns(2)
             with col1:
-                st.metric("Local Files", availability["local_count"])
+                st.metric("Local Snapshots", availability["local_count"])
                 if availability["local_date_range"][0]:
                     st.write(
                         f"**Local Range:** {availability['local_date_range'][0]} to {availability['local_date_range'][1]}"
@@ -35,7 +35,7 @@ def show_data_fetcher(data_type: str, key_prefix: str = "") -> bool:
                     st.write("**No local data found**")
 
             with col2:
-                st.metric("Remote Files", availability["remote_count"])
+                st.metric("Remote Snapshots", availability["remote_count"])
                 if availability["remote_date_range"][0]:
                     st.write(
                         f"**Remote Range:** {availability['remote_date_range'][0]} to {availability['remote_date_range'][1]}"
@@ -46,8 +46,14 @@ def show_data_fetcher(data_type: str, key_prefix: str = "") -> bool:
             if availability["missing_dates"]:
                 missing_count = len(availability["missing_dates"])
                 st.info(
-                    f"Found {missing_count} files that can be downloaded. First 10: {', '.join(availability['missing_dates'])}"
+                    f"ℹ️ Found {missing_count}+ snapshots available to download. "
+                    f"First 10 dates: {', '.join(availability['missing_dates'][:10])}"
                 )
+
+            st.caption(
+                "💡 **Tip:** Data files are weekly snapshots. Each snapshot represents "
+                "cumulative metrics since the previous week."
+            )
 
         except Exception as e:
             st.error(f"Failed to check data availability: {e}")
@@ -55,11 +61,16 @@ def show_data_fetcher(data_type: str, key_prefix: str = "") -> bool:
     # Date range selection
     st.subheader("📅 Select Date Range to Fetch")
 
+    st.info(
+        "ℹ️ **Note:** Data files are weekly snapshots representing cumulative metrics "
+        "since the previous snapshot. Files will be **downloaded and overwritten** to ensure fresh data."
+    )
+
     col1, col2 = st.columns(2)
 
     with col1:
-        # Default to last 7 days
-        default_start = (datetime.now() - timedelta(days=7)).date()
+        # Default to last 30 days for better coverage of weekly snapshots
+        default_start = (datetime.now() - timedelta(days=30)).date()
         start_date = st.date_input(
             "Start Date", value=default_start, key=f"{key_prefix}fetch_start_date"
         )
@@ -74,32 +85,41 @@ def show_data_fetcher(data_type: str, key_prefix: str = "") -> bool:
         st.error("Start date must be before end date")
         return False
 
-    # Calculate number of days
-    date_range_days = (end_date - start_date).days + 1
-
-    if data_type == "apps":
-        # For apps, we fetch from 3 servers
-        total_files = date_range_days * 3
-        st.info(
-            f"Will attempt to fetch {date_range_days} days × 3 servers = {total_files} files"
-        )
-    else:
-        st.info(f"Will attempt to fetch {date_range_days} files")
-
-    # Check what files would be missing
     start_str = start_date.strftime("%Y-%m-%d")
     end_str = end_date.strftime("%Y-%m-%d")
 
+    # Check what files are available in the date range
     try:
-        missing_dates = fetcher.get_missing_dates(data_type, start_str, end_str)
-        if missing_dates:
-            st.warning(f"Found {len(missing_dates)} missing files in date range")
-            with st.expander("Show missing dates"):
-                st.write(missing_dates)
+        # Get all available remote dates
+        remote_dates = fetcher.get_available_remote_dates(data_type)
+
+        # Filter by date range
+        available_in_range = [
+            date for date in remote_dates if start_str <= date <= end_str
+        ]
+
+        if data_type == "apps":
+            # For apps, we fetch from 4 servers
+            num_servers = len(fetcher.servers)
+            total_available = len(available_in_range) * num_servers
+            st.info(
+                f"📊 Found **{len(available_in_range)}** available snapshots in date range "
+                f"(**{total_available} files** across {num_servers} servers will be downloaded)"
+            )
         else:
-            st.success("All files for this date range are already downloaded!")
+            st.info(
+                f"📊 Found **{len(available_in_range)}** available snapshots in date range "
+                f"(**{len(available_in_range)} files** will be downloaded)"
+            )
+
+        if not available_in_range:
+            st.warning("⚠️ No data files available on the server for this date range")
+        else:
+            with st.expander("📋 Show dates to be fetched"):
+                st.write(available_in_range)
+
     except Exception as e:
-        st.error(f"Failed to check missing dates: {e}")
+        st.error(f"Failed to check available dates: {e}")
 
     # Fetch button
     if st.button(
@@ -138,22 +158,17 @@ def fetch_data_with_progress(
         # Show results
         st.subheader("📋 Fetch Results")
 
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3 = st.columns(3)
         with col1:
             st.metric("Total Files", results["total_files"])
         with col2:
             st.metric("✅ Successful", results["successful"], delta=None)
         with col3:
-            st.metric("⏭️ Skipped", results["skipped"], delta=None)
-        with col4:
             st.metric("❌ Failed", results["failed"], delta=None)
 
         # Show success/failure breakdown
         if results["successful"] > 0:
             st.success(f"Successfully downloaded {results['successful']} files!")
-
-        if results["skipped"] > 0:
-            st.info(f"Skipped {results['skipped']} files (already exist)")
 
         if results["failed"] > 0:
             st.error(f"Failed to download {results['failed']} files")
@@ -161,7 +176,7 @@ def fetch_data_with_progress(
                 for error in results["errors"]:
                     st.text(error)
 
-        return results["successful"] > 0 or results["skipped"] > 0
+        return results["successful"] > 0
 
     except Exception as e:
         st.error(f"Failed to fetch data: {e}")
@@ -171,7 +186,10 @@ def fetch_data_with_progress(
 def show_quick_fetch_buttons(data_type: str, key_prefix: str = "") -> bool:
     """Show quick fetch buttons for common time ranges."""
     st.subheader("⚡ Quick Fetch")
-    st.markdown("Fetch data for common time ranges:")
+    st.markdown(
+        "Fetch data for common time ranges. The system will download available weekly snapshots "
+        "within each period."
+    )
 
     if "data_fetcher" not in st.session_state:
         st.session_state.data_fetcher = DataFetcher()
@@ -183,8 +201,8 @@ def show_quick_fetch_buttons(data_type: str, key_prefix: str = "") -> bool:
     today = datetime.now().date()
 
     with col1:
-        if st.button("Last week", key=f"{key_prefix}quick_week"):
-            start_date = (today - timedelta(days=7)).strftime("%Y-%m-%d")
+        if st.button("Last 2 weeks", key=f"{key_prefix}quick_2weeks"):
+            start_date = (today - timedelta(days=14)).strftime("%Y-%m-%d")
             end_date = today.strftime("%Y-%m-%d")
             return fetch_data_with_progress(fetcher, data_type, start_date, end_date)
 
