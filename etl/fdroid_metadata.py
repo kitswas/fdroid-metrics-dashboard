@@ -12,6 +12,8 @@ import yaml
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+from etl.config import fetcher_config, metadata_config
+
 logger = logging.getLogger(__name__)
 
 
@@ -25,28 +27,34 @@ class FDroidMetadataFetcher:
         Args:
             cache_dir: Directory to cache metadata files. If None, uses ./cache/metadata
         """
-        self.base_url = "https://gitlab.com/fdroid/fdroiddata/-/raw/master/metadata"
+        self.base_url = metadata_config.FDROID_METADATA_BASE_URL
         self.cache_dir = Path(cache_dir or "./cache/metadata")
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
         # Session with retry strategy
         self.session = requests.Session()
         retry_strategy = Retry(
-            total=3, status_forcelist=[429, 500, 502, 503, 504], backoff_factor=1
+            total=metadata_config.RETRY_TOTAL,
+            status_forcelist=metadata_config.STATUS_FORCELIST,
+            backoff_factor=metadata_config.RETRY_BACKOFF_FACTOR,
         )
         adapter = HTTPAdapter(max_retries=retry_strategy)
         self.session.mount("http://", adapter)
         self.session.mount("https://", adapter)
 
         # Rate limiting
-        self.last_request_time = 0
-        self.min_request_interval = 0.1  # 100ms between requests
+        self.last_request_time: float = 0
+        self.min_request_interval = fetcher_config.RATE_LIMIT_INTERVAL
 
         # Cache for parsed metadata
         self._metadata_cache: dict[str, dict] = {}
 
     def _rate_limit(self) -> None:
-        """Implement rate limiting to be respectful to GitLab."""
+        """
+        Implement rate limiting to be respectful to GitLab servers.
+
+        Ensures minimum time interval between consecutive requests.
+        """
         current_time = time.time()
         time_since_last = current_time - self.last_request_time
         if time_since_last < self.min_request_interval:
@@ -54,7 +62,15 @@ class FDroidMetadataFetcher:
         self.last_request_time = time.time()
 
     def _get_cache_path(self, package_id: str) -> Path:
-        """Get the cache file path for a package."""
+        """
+        Get the cache file path for a package.
+
+        Args:
+            package_id: The package ID (e.g., 'com.example.app')
+
+        Returns:
+            Path object pointing to the cache file location
+        """
         return self.cache_dir / f"{package_id}.yml"
 
     def _fetch_metadata_from_remote(self, package_id: str) -> dict | None:
@@ -98,10 +114,10 @@ class FDroidMetadataFetcher:
             logger.warning(f"Network error fetching metadata for {package_id}: {e}")
             return None
         except yaml.YAMLError as e:
-            logger.warning(f"YAML parsing error for {package_id}: {e}")
+            logger.error(f"YAML parsing error for {package_id}: {e}")
             return None
-        except Exception as e:
-            logger.error(f"Unexpected error fetching metadata for {package_id}: {e}")
+        except OSError as e:
+            logger.error(f"File system error for {package_id}: {e}")
             return None
 
     def _load_cached_metadata(self, package_id: str) -> dict | None:
@@ -120,12 +136,12 @@ class FDroidMetadataFetcher:
             try:
                 with open(cache_path, encoding="utf-8") as f:
                     return yaml.safe_load(f)
-            except Exception as e:
+            except (yaml.YAMLError, OSError) as e:
                 logger.warning(f"Error reading cached metadata for {package_id}: {e}")
                 # Remove corrupted cache file
                 try:
                     cache_path.unlink()
-                except Exception:
+                except OSError:
                     pass
 
         return None

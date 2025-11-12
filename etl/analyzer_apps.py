@@ -9,6 +9,7 @@ from datetime import datetime
 
 import pandas as pd
 
+from etl.config import cache_config
 from etl.getdata_apps import SERVERS
 from etl.getdata_apps import SUB_DATA_DIR as DATA_DIR
 
@@ -19,19 +20,31 @@ class AppMetricsAnalyzer:
     """Analyzer for F-Droid app metrics data from HTTP servers."""
 
     def __init__(self, data_dir: pathlib.Path | None = None) -> None:
-        """Initialize analyzer with raw data directory."""
+        """
+        Initialize analyzer with raw data directory.
+
+        Args:
+            data_dir: Path to directory containing raw app metrics data.
+                     If None, uses default DATA_DIR.
+        """
         if data_dir is None:
             data_dir = DATA_DIR
         self.data_dir = data_dir
-        self._cache = {}
-        self._cache_size_limit = 100  # Limit cache to 100 entries
+        self._cache: dict[str, dict] = {}
+        self._cache_size_limit = cache_config.APP_CACHE_SIZE
 
         # HTTP servers to aggregate data from
         self.servers = SERVERS
 
     def get_available_dates(self) -> list[str]:
-        """Get list of available data dates across all servers."""
-        dates = set()
+        """
+        Get list of available data dates across all servers.
+
+        Returns:
+            Sorted list of date strings in YYYY-MM-DD format found
+            across all server data directories.
+        """
+        dates: set[str] = set()
 
         for server in self.servers:
             server_dir = self.data_dir / server
@@ -50,7 +63,20 @@ class AppMetricsAnalyzer:
         return sorted(list(dates))
 
     def load_data(self, date: str, server: str) -> dict:
-        """Load data for a specific date and server."""
+        """
+        Load data for a specific date and server.
+
+        Args:
+            date: Date string in YYYY-MM-DD format
+            server: Server name (e.g., 'http01.fdroid.net')
+
+        Returns:
+            Dictionary containing the metrics data for the specified date and server
+
+        Raises:
+            FileNotFoundError: If data file doesn't exist for the given date and server
+            json.JSONDecodeError: If data file contains invalid JSON
+        """
         cache_key = f"{server}_{date}"
         if cache_key in self._cache:
             return self._cache[cache_key]
@@ -72,8 +98,22 @@ class AppMetricsAnalyzer:
         return data
 
     def load_merged_data(self, date: str) -> dict:
-        """Load and merge data from all servers for a specific date."""
-        merged_data = {
+        """
+        Load and merge data from all servers for a specific date.
+
+        Args:
+            date: Date string in YYYY-MM-DD format
+
+        Returns:
+            Dictionary containing merged metrics from all servers with keys:
+            - hits: Total hits across all servers
+            - errors: Aggregated error data
+            - hitsPerCountry: Country-wise hit distribution
+            - paths: Request path statistics
+            - queries: Query statistics
+            - servers: List of servers that had data
+        """
+        merged_data: dict = {
             "hits": 0,
             "errors": {},
             "hitsPerCountry": {},
@@ -434,12 +474,22 @@ class AppMetricsAnalyzer:
             return pd.DataFrame()
 
     def _get_top_items(self, data: dict, limit: int) -> list[tuple[str, int]]:
-        """Get top N items from a dictionary by value."""
+        """
+        Get top N items from a dictionary by value.
+
+        Args:
+            data: Dictionary mapping keys to either integer values or
+                  dictionaries with a 'hits' key
+            limit: Maximum number of items to return
+
+        Returns:
+            List of (key, hits) tuples sorted by hits in descending order
+        """
         if not data:
             return []
 
-        # Handle nested dictionaries (like paths with metadata)
-        items = []
+        # Handle nested dictionaries (like queries with metadata)
+        items: list[tuple[str, int]] = []
         for key, value in data.items():
             if isinstance(value, dict):
                 hits = value.get("hits", 0)

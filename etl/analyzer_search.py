@@ -9,6 +9,7 @@ from datetime import datetime
 
 import pandas as pd
 
+from etl.config import cache_config
 from etl.getdata_search import SUB_DATA_DIR as DATA_DIR
 
 logger = logging.getLogger(__name__)
@@ -18,16 +19,28 @@ class SearchMetricsAnalyzer:
     """Analyzer for F-Droid search metrics data."""
 
     def __init__(self, data_dir: pathlib.Path | None = None) -> None:
-        """Initialize analyzer with raw data directory."""
+        """
+        Initialize analyzer with raw data directory.
+
+        Args:
+            data_dir: Path to directory containing raw search metrics data.
+                     If None, uses default DATA_DIR.
+        """
         if data_dir is None:
             data_dir = DATA_DIR
         self.data_dir = data_dir
-        self._cache = {}
-        self._cache_size_limit = 1000
+        self._cache: dict[str, dict] = {}
+        self._cache_size_limit = cache_config.SEARCH_CACHE_SIZE
 
     def get_available_dates(self) -> list[str]:
-        """Get list of available data dates."""
-        dates = []
+        """
+        Get list of available data dates.
+
+        Returns:
+            Sorted list of date strings in YYYY-MM-DD format found
+            in the data directory.
+        """
+        dates: list[str] = []
         for file in self.data_dir.glob("*.json"):
             if file.name != "last_submitted_to_cimp.json":
                 try:
@@ -40,7 +53,19 @@ class SearchMetricsAnalyzer:
         return sorted(dates)
 
     def load_data(self, date: str) -> dict:
-        """Load data for a specific date."""
+        """
+        Load data for a specific date.
+
+        Args:
+            date: Date string in YYYY-MM-DD format
+
+        Returns:
+            Dictionary containing the search metrics data for the specified date
+
+        Raises:
+            FileNotFoundError: If data file doesn't exist for the given date
+            json.JSONDecodeError: If data file contains invalid JSON
+        """
         if date in self._cache:
             return self._cache[date]
 
@@ -219,12 +244,22 @@ class SearchMetricsAnalyzer:
         return df.sort_values("total_hits", ascending=False)
 
     def _get_top_items(self, data: dict, limit: int) -> list[tuple[str, int]]:
-        """Get top N items from a dictionary by value."""
+        """
+        Get top N items from a dictionary by value.
+
+        Args:
+            data: Dictionary mapping keys to either integer values or
+                  dictionaries with a 'hits' key
+            limit: Maximum number of items to return
+
+        Returns:
+            List of (key, hits) tuples sorted by hits in descending order
+        """
         if not data:
             return []
 
         # Handle nested dictionaries (like queries with metadata)
-        items = []
+        items: list[tuple[str, int]] = []
         for key, value in data.items():
             if isinstance(value, dict):
                 hits = value.get("hits", 0)

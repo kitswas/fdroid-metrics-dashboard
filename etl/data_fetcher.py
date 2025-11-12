@@ -3,11 +3,14 @@ Data fetcher for F-Droid metrics that can be used within Streamlit dashboard
 """
 
 import json
+import logging
 from collections.abc import Callable
 from datetime import datetime, timedelta
 from typing import Any
 
 import requests
+
+from etl.config import fetcher_config
 
 # Import existing data fetching functions
 from etl.getdata_apps import (
@@ -29,12 +32,14 @@ from etl.getdata_search import (
     SUB_DATA_DIR as SEARCH_DATA_DIR,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class DataFetcher:
     """Unified data fetcher for both search and app metrics."""
 
     def __init__(self) -> None:
-        """Initialize the data fetcher."""
+        """Initialize the data fetcher with configured URLs and directories."""
         self.apps_base_url = APPS_BASE_URL
         self.search_base_url = SEARCH_BASE_URL
         self.search_index_url = INDEX_URL
@@ -43,7 +48,18 @@ class DataFetcher:
         self.search_data_dir = SEARCH_DATA_DIR
 
     def get_available_remote_dates(self, data_type: str) -> list[str]:
-        """Get available dates from remote servers."""
+        """
+        Get available dates from remote servers.
+
+        Args:
+            data_type: Type of data to query - either 'search' or 'apps'
+
+        Returns:
+            Sorted list of date strings in YYYY-MM-DD format available on remote servers
+
+        Raises:
+            ValueError: If data_type is not 'search' or 'apps'
+        """
         if data_type == "search":
             return self._get_search_remote_dates()
         elif data_type == "apps":
@@ -52,13 +68,23 @@ class DataFetcher:
             raise ValueError("data_type must be 'search' or 'apps'")
 
     def _get_search_remote_dates(self) -> list[str]:
-        """Get available search data dates from remote server."""
+        """
+        Get available search data dates from remote server.
+
+        Returns:
+            Sorted list of date strings available for search metrics
+
+        Note:
+            Returns empty list if fetching fails (error is logged)
+        """
         try:
-            response = requests.get(self.search_index_url, timeout=10)
+            response = requests.get(
+                self.search_index_url, timeout=fetcher_config.REQUEST_TIMEOUT
+            )
             response.raise_for_status()
             index = response.json()
 
-            dates = []
+            dates: list[str] = []
             for filename in index:
                 if filename == "last_submitted_to_cimp.json":
                     continue
@@ -70,18 +96,27 @@ class DataFetcher:
                     continue
 
             return sorted(dates)
-        except Exception as e:
-            # st.error(f"Failed to fetch search data index: {e}")
-            print(f"Failed to fetch search data index: {e}")
+        except (requests.RequestException, json.JSONDecodeError) as e:
+            logger.error(f"Failed to fetch search data index: {e}")
             return []
 
     def _get_apps_remote_dates(self) -> list[str]:
-        """Get available app data dates from remote servers (using first server as reference)."""
+        """
+        Get available app data dates from remote servers.
+
+        Returns:
+            Sorted list of date strings available across all app servers
+
+        Note:
+            Returns empty list if fetching fails (error is logged)
+        """
         try:
-            dates = []
+            dates: list[str] = []
             for server in self.servers:
                 index_url = f"{self.apps_base_url}/{server}/index.json"
-                response = requests.get(index_url, timeout=10)
+                response = requests.get(
+                    index_url, timeout=fetcher_config.REQUEST_TIMEOUT
+                )
                 response.raise_for_status()
                 index = response.json()
 
@@ -94,18 +129,28 @@ class DataFetcher:
                         continue
 
             return sorted(dates)
-        except Exception as e:
-            # st.error(f"Failed to fetch app data index: {e}")
-            print(f"Failed to fetch app data index: {e}")
+        except (requests.RequestException, json.JSONDecodeError) as e:
+            logger.error(f"Failed to fetch app data index: {e}")
             return []
 
     def get_local_dates(self, data_type: str) -> list[str]:
-        """Get available dates from local data files."""
+        """
+        Get available dates from local data files.
+
+        Args:
+            data_type: Type of data to query - either 'search' or 'apps'
+
+        Returns:
+            Sorted list of date strings found in local data files
+
+        Raises:
+            ValueError: If data_type is not 'search' or 'apps'
+        """
         if data_type == "search":
             data_dir = self.search_data_dir
         elif data_type == "apps":
             # For apps, check all server directories
-            dates = set()
+            dates: set[str] = set()
             for server in self.servers:
                 server_dir = self.apps_data_dir / server
                 if server_dir.exists():
@@ -121,7 +166,7 @@ class DataFetcher:
             raise ValueError("data_type must be 'search' or 'apps'")
 
         # For search data
-        dates = []
+        dates_list: list[str] = []
         if data_dir.exists():
             for file in data_dir.glob("*.json"):
                 if file.name == "last_submitted_to_cimp.json":
@@ -129,10 +174,10 @@ class DataFetcher:
                 try:
                     date_str = file.stem
                     datetime.strptime(date_str, "%Y-%m-%d")
-                    dates.append(date_str)
+                    dates_list.append(date_str)
                 except ValueError:
                     continue
-        return sorted(dates)
+        return sorted(dates_list)
 
     def fetch_date_range(
         self,
@@ -158,9 +203,9 @@ class DataFetcher:
         if start_dt > end_dt:
             raise ValueError("Start date must be before or equal to end date")
 
-        limit_days = 366 * 2  # (not more than 2 years)
-        if (end_dt - start_dt).days > limit_days:
-            raise ValueError(f"Date range too large. Maximum {limit_days} days allowed")
+        max_days = fetcher_config.MAX_DATE_RANGE_DAYS
+        if (end_dt - start_dt).days > max_days:
+            raise ValueError(f"Date range too large. Maximum {max_days} days allowed")
 
         # Get available dates from index.json and filter by date range
         available_dates = self.get_available_remote_dates(data_type)
@@ -221,7 +266,7 @@ class DataFetcher:
 
             try:
                 url = f"{self.search_base_url}/{date}.json"
-                response = requests.get(url, timeout=30)
+                response = requests.get(url, timeout=fetcher_config.REQUEST_TIMEOUT)
                 response.raise_for_status()
 
                 with open(filepath, "w", encoding="utf-8") as f:
@@ -229,10 +274,11 @@ class DataFetcher:
 
                 results["successful"] += 1
 
-            except Exception as e:
+            except (requests.RequestException, json.JSONDecodeError, OSError) as e:
                 error_msg = f"Failed to download {date}: {str(e)}"
                 results["errors"].append(error_msg)
                 results["failed"] += 1
+                logger.warning(error_msg)
 
         if progress_callback:
             progress_callback(1.0)
@@ -276,7 +322,7 @@ class DataFetcher:
 
                 try:
                     url = f"{self.apps_base_url}/{server}/{date}.json"
-                    response = requests.get(url, timeout=30)
+                    response = requests.get(url, timeout=fetcher_config.REQUEST_TIMEOUT)
                     response.raise_for_status()
 
                     with open(filepath, "w", encoding="utf-8") as f:
@@ -284,10 +330,11 @@ class DataFetcher:
 
                     results["successful"] += 1
 
-                except Exception as e:
+                except (requests.RequestException, json.JSONDecodeError, OSError) as e:
                     error_msg = f"Failed to download {server}/{date}: {str(e)}"
                     results["errors"].append(error_msg)
                     results["failed"] += 1
+                    logger.warning(error_msg)
 
         if progress_callback:
             progress_callback(1.0)
@@ -298,12 +345,25 @@ class DataFetcher:
     def get_missing_dates(
         self, data_type: str, start_date: str, end_date: str
     ) -> list[str]:
-        """Get list of dates that are missing locally within a date range."""
+        """
+        Get list of dates that are missing locally within a date range.
+
+        Args:
+            data_type: Type of data - either 'search' or 'apps'
+            start_date: Start date in YYYY-MM-DD format
+            end_date: End date in YYYY-MM-DD format
+
+        Returns:
+            List of date strings that are missing from local storage
+
+        Raises:
+            ValueError: If date format is invalid
+        """
         start_dt = datetime.strptime(start_date, "%Y-%m-%d")
         end_dt = datetime.strptime(end_date, "%Y-%m-%d")
 
         # Generate list of all dates in range
-        all_dates = []
+        all_dates: list[str] = []
         current_date = start_dt
         while current_date <= end_dt:
             all_dates.append(current_date.strftime("%Y-%m-%d"))
@@ -316,7 +376,20 @@ class DataFetcher:
         return [date for date in all_dates if date not in local_dates]
 
     def check_data_availability(self, data_type: str) -> dict[str, Any]:
-        """Check data availability both locally and remotely."""
+        """
+        Check data availability both locally and remotely.
+
+        Args:
+            data_type: Type of data - either 'search' or 'apps'
+
+        Returns:
+            Dictionary containing:
+            - local_count: Number of local data files
+            - remote_count: Number of remote data files
+            - local_date_range: Tuple of (earliest, latest) local dates
+            - remote_date_range: Tuple of (earliest, latest) remote dates
+            - missing_dates: List of first 10 dates available remotely but not locally
+        """
         local_dates = self.get_local_dates(data_type)
         remote_dates = self.get_available_remote_dates(data_type)
 

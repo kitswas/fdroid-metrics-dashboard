@@ -14,16 +14,42 @@ from etl.data_fetcher import DataFetcher
 
 # --- CONFIG ---
 OUTPUT_DIR = "processed/monthly"
+MONTHLY_SNAPSHOT_COUNT = 4  # Number of snapshots to use for monthly stats
+
+logger = logging.getLogger(__name__)
 
 
 def get_last_n_months_dates(dates: list[str], n_months: int) -> list[str]:
-    # dates: list of YYYY-MM-DD strings, sorted ascending
-    months = {}
-    unique_dates = set()
+    """
+    Extract the last N months of dates from a sorted date list.
+
+    This function takes the most recent date from each of the last N months,
+    working backwards from the most recent date in the list.
+
+    Args:
+        dates: Sorted list of date strings in YYYY-MM-DD format (ascending order)
+        n_months: Number of months to include in the result
+
+    Returns:
+        Sorted list of unique dates representing the last N months
+
+    Raises:
+        ValueError: If dates list is empty or contains invalid date formats
+    """
+    if not dates:
+        raise ValueError("Dates list cannot be empty")
+
+    months: dict[str, list[str]] = {}
+    unique_dates: set[str] = set()
+
     for date_str in reversed(dates):
         if date_str in unique_dates:
             continue
-        dt = datetime.strptime(date_str, "%Y-%m-%d")
+        try:
+            dt = datetime.strptime(date_str, "%Y-%m-%d")
+        except ValueError as e:
+            raise ValueError(f"Invalid date format '{date_str}': {e}") from e
+
         ym = dt.strftime("%Y-%m")
         if ym not in months:
             months[ym] = []
@@ -32,8 +58,9 @@ def get_last_n_months_dates(dates: list[str], n_months: int) -> list[str]:
         if len(months) >= n_months:
             # Once we have n_months, stop collecting
             break
+
     # Flatten and sort
-    result = []
+    result: list[str] = []
     for month_dates in months.values():
         result.extend(month_dates)
     # Ensure result is unique
@@ -41,10 +68,21 @@ def get_last_n_months_dates(dates: list[str], n_months: int) -> list[str]:
 
 
 def main() -> None:
+    """
+    Main function to extract per-package monthly metrics.
+
+    This function:
+    1. Fetches available dates from remote servers
+    2. Downloads the last N months of data
+    3. Processes app and search metrics
+    4. Generates per-package JSON files with monthly statistics
+
+    Raises:
+        ValueError: If insufficient data is available
+    """
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
     )
-    logger = logging.getLogger("extract_monthly_package_json")
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     logger.info("Getting available remote dates for apps and search...")
@@ -56,7 +94,7 @@ def main() -> None:
     )
 
     # Get last n common remote dates
-    n = 4
+    n = MONTHLY_SNAPSHOT_COUNT
     common_remote_dates = sorted(set(app_remote_dates) & set(search_remote_dates))
     if len(common_remote_dates) < n:
         logger.error(
@@ -94,13 +132,14 @@ def main() -> None:
     app_dates = app_analyzer.get_available_dates()
     search_dates = search_analyzer.get_available_dates()
     common_dates = sorted(set(app_dates) & set(search_dates))
-    if len(common_dates) < 4:
+    min_required = MONTHLY_SNAPSHOT_COUNT
+    if len(common_dates) < min_required:
         logger.error(
             f"Not enough common dates found (found {len(common_dates)}). Aborting."
         )
         return
-    dates = common_dates[-4:]
-    logger.info(f"Processing last 4 common dates: {dates}")
+    dates = common_dates[-min_required:]
+    logger.info(f"Processing last {min_required} common dates: {dates}")
 
     # --- App metrics ---
     logger.info("Loading app metrics...")
