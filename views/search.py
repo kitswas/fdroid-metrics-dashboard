@@ -51,12 +51,12 @@ def show_search_page() -> None:
         tab_fetch, tab_analysis = st.tabs(["📥 Fetch Data", "📊 Analysis"])
 
         with tab_fetch:
-            # Show data fetching interface
-            data_fetched = show_data_fetcher("search", "search_")
+            # Show quick fetch buttons first for better UX
+            data_fetched = show_quick_fetch_buttons("search", "search_")
 
-            # Show quick fetch buttons
+            # Show detailed data fetching interface if quick fetch wasn't used
             if not data_fetched:
-                data_fetched = show_quick_fetch_buttons("search", "search_")
+                data_fetched = show_data_fetcher("search", "search_")
 
             if data_fetched:
                 st.success(
@@ -106,7 +106,13 @@ def show_search_page() -> None:
     # Show data fetching interface if requested
     if st.session_state.get("show_search_fetch", False):
         with st.expander("📥 Fetch Additional Search Data", expanded=True):
-            data_fetched = show_data_fetcher("search", "search_sidebar_")
+            # Show quick fetch buttons first for better UX
+            data_fetched = show_quick_fetch_buttons("search", "search_sidebar_")
+
+            # Show detailed data fetching interface if quick fetch wasn't used
+            if not data_fetched:
+                data_fetched = show_data_fetcher("search", "search_sidebar_")
+
             if data_fetched:
                 st.success(
                     "✅ Data fetched successfully! Refresh the page to see new data."

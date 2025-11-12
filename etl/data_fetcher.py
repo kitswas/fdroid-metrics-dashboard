@@ -257,7 +257,6 @@ class DataFetcher:
                 "total_files": 0,
                 "successful": 0,
                 "failed": 0,
-                "skipped": 0,
                 "errors": ["No data files available in the specified date range"],
             }
 
@@ -288,7 +287,6 @@ class DataFetcher:
             "total_files": len(dates),
             "successful": 0,
             "failed": 0,
-            "skipped": 0,
             "errors": [],
         }
 
@@ -354,7 +352,6 @@ class DataFetcher:
                 "total_files": 0,
                 "successful": 0,
                 "failed": 0,
-                "skipped": 0,
                 "errors": ["No files available to download"],
             }
 
@@ -362,7 +359,6 @@ class DataFetcher:
             "total_files": total_operations,
             "successful": 0,
             "failed": 0,
-            "skipped": len(dates) * len(self.servers) - total_operations,
             "errors": [],
         }
 

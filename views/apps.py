@@ -71,12 +71,12 @@ def show_apps_page() -> None:
         tab_fetch, tab_analysis = st.tabs(["📥 Fetch Data", "📊 Analysis"])
 
         with tab_fetch:
-            # Show data fetching interface
-            data_fetched = show_data_fetcher("apps", "apps_")
+            # Show quick fetch buttons first for better UX
+            data_fetched = show_quick_fetch_buttons("apps", "apps_")
 
-            # Show quick fetch buttons
+            # Show detailed data fetching interface if quick fetch wasn't used
             if not data_fetched:
-                data_fetched = show_quick_fetch_buttons("apps", "apps_")
+                data_fetched = show_data_fetcher("apps", "apps_")
 
             if data_fetched:
                 st.success(
@@ -126,7 +126,13 @@ def show_apps_page() -> None:
     # Show data fetching interface if requested
     if st.session_state.get("show_apps_fetch", False):
         with st.expander("📥 Fetch Additional App Data", expanded=True):
-            data_fetched = show_data_fetcher("apps", "apps_sidebar_")
+            # Show quick fetch buttons first for better UX
+            data_fetched = show_quick_fetch_buttons("apps", "apps_sidebar_")
+
+            # Show detailed data fetching interface if quick fetch wasn't used
+            if not data_fetched:
+                data_fetched = show_data_fetcher("apps", "apps_sidebar_")
+
             if data_fetched:
                 st.success(
                     "✅ Data fetched successfully! Refresh the page to see new data."
@@ -830,7 +836,7 @@ def show_server_comparison(analyzer: AppMetricsAnalyzer, dates: list) -> None:
             )
             st.metric(
                 "Top Server",
-                top_server["server"].item() if top_server is not None else "N/A",
+                str(top_server["server"]) if top_server is not None else "N/A",
             )
         with col4:
             st.metric(

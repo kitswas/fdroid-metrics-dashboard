@@ -171,24 +171,17 @@ def fetch_data_with_progress(
         # Show results
         st.subheader("📋 Fetch Results")
 
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3 = st.columns(3)
         with col1:
             st.metric("Total Files", results["total_files"])
         with col2:
             st.metric("✅ Successful", results["successful"], delta=None)
         with col3:
             st.metric("❌ Failed", results["failed"], delta=None)
-        with col4:
-            st.metric("⏭️ Skipped", results["skipped"], delta=None)
 
         # Show success/failure breakdown
         if results["successful"] > 0:
             st.success(f"Successfully downloaded {results['successful']} files!")
-
-        if results["skipped"] > 0:
-            st.info(
-                f"ℹ️ {results['skipped']} files were skipped because they are not available on those servers"
-            )
 
         if results["failed"] > 0:
             st.error(f"Failed to download {results['failed']} files")
@@ -221,26 +214,26 @@ def show_quick_fetch_buttons(data_type: str, key_prefix: str = "") -> bool:
     today = datetime.now().date()
 
     with col1:
-        if st.button("Last 2 weeks", key=f"{key_prefix}quick_2weeks"):
-            start_date = (today - timedelta(days=14)).strftime("%Y-%m-%d")
-            end_date = today.strftime("%Y-%m-%d")
-            return fetch_data_with_progress(fetcher, data_type, start_date, end_date)
-
-    with col2:
         if st.button("Last month", key=f"{key_prefix}quick_month"):
             start_date = (today - timedelta(days=30)).strftime("%Y-%m-%d")
             end_date = today.strftime("%Y-%m-%d")
             return fetch_data_with_progress(fetcher, data_type, start_date, end_date)
 
-    with col3:
+    with col2:
         if st.button("Last 3 months", key=f"{key_prefix}quick_3months"):
             start_date = (today - timedelta(days=90)).strftime("%Y-%m-%d")
             end_date = today.strftime("%Y-%m-%d")
             return fetch_data_with_progress(fetcher, data_type, start_date, end_date)
 
-    with col4:
+    with col3:
         if st.button("Last 6 months", key=f"{key_prefix}quick_6months"):
             start_date = (today - timedelta(days=180)).strftime("%Y-%m-%d")
+            end_date = today.strftime("%Y-%m-%d")
+            return fetch_data_with_progress(fetcher, data_type, start_date, end_date)
+
+    with col4:
+        if st.button("Last year", key=f"{key_prefix}quick_year"):
+            start_date = (today - timedelta(days=365)).strftime("%Y-%m-%d")
             end_date = today.strftime("%Y-%m-%d")
             return fetch_data_with_progress(fetcher, data_type, start_date, end_date)
 
