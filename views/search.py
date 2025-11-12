@@ -12,6 +12,20 @@ from etl.analyzer_search import SearchMetricsAnalyzer
 from etl.data_fetcher_ui import show_data_fetcher, show_quick_fetch_buttons
 
 
+@st.cache_resource
+def get_search_analyzer() -> SearchMetricsAnalyzer:
+    """Get a cached instance of the search metrics analyzer."""
+    return SearchMetricsAnalyzer()
+
+
+@st.cache_data
+def get_time_series_data_cached(
+    _analyzer: SearchMetricsAnalyzer, dates: list[str] | None = None
+) -> pd.DataFrame:
+    """Get cached time series data."""
+    return _analyzer.get_time_series_data(dates)
+
+
 def show_search_page() -> None:
     """Show the search metrics page."""
     st.title("🔍 F-Droid Search Metrics")
@@ -20,7 +34,7 @@ def show_search_page() -> None:
     )
 
     # Initialize analyzer
-    analyzer = SearchMetricsAnalyzer()
+    analyzer = get_search_analyzer()
 
     # Sidebar for filters
     st.sidebar.header("Search Metrics Filters")
@@ -169,7 +183,7 @@ def show_search_overview(analyzer: SearchMetricsAnalyzer, dates: list) -> None:
 
     else:
         # Multi-day time series
-        ts_data = analyzer.get_time_series_data(dates)
+        ts_data = get_time_series_data_cached(analyzer, dates)
 
         if not ts_data.empty:
             # Summary metrics

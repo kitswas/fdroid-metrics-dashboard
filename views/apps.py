@@ -18,6 +18,34 @@ from etl.getdata_apps import SERVERS
 logger = logging.getLogger(__name__)
 
 
+@st.cache_resource
+def get_app_analyzer() -> AppMetricsAnalyzer:
+    """Get a cached instance of the app metrics analyzer."""
+    return AppMetricsAnalyzer()
+
+
+@st.cache_resource
+def get_metadata_fetcher() -> FDroidMetadataFetcher:
+    """Get a cached instance of the metadata fetcher."""
+    return FDroidMetadataFetcher(cache_dir="./cache/metadata")
+
+
+@st.cache_data
+def get_all_packages_with_downloads_cached(
+    _analyzer: AppMetricsAnalyzer, dates: list[str]
+) -> pd.DataFrame:
+    """Get cached all packages with downloads data."""
+    return _analyzer.get_all_packages_with_downloads(dates)
+
+
+@st.cache_data
+def get_time_series_data_cached(
+    _analyzer: AppMetricsAnalyzer, dates: list[str] | None = None
+) -> pd.DataFrame:
+    """Get cached time series data."""
+    return _analyzer.get_time_series_data(dates)
+
+
 def show_apps_page() -> None:
     """Show the app metrics page."""
     st.title("📱 F-Droid App Metrics")
@@ -26,7 +54,7 @@ def show_apps_page() -> None:
     )
 
     # Initialize analyzer
-    analyzer = AppMetricsAnalyzer()
+    analyzer = get_app_analyzer()
 
     # Sidebar for filters
     st.sidebar.header("App Metrics Filters")
@@ -192,7 +220,7 @@ def show_apps_overview(analyzer: AppMetricsAnalyzer, dates: list) -> None:
 
     else:
         # Multi-day time series
-        ts_data = analyzer.get_time_series_data(dates)
+        ts_data = get_time_series_data_cached(analyzer, dates)
 
         if not ts_data.empty:
             # Summary metrics
@@ -434,12 +462,6 @@ def show_package_analysis(analyzer: AppMetricsAnalyzer, dates: list) -> None:
         # Package categories analysis
         st.subheader("Package Categories")
 
-        # Initialize metadata fetcher with caching
-        @st.cache_resource
-        def get_metadata_fetcher() -> FDroidMetadataFetcher:
-            """Get a cached instance of the metadata fetcher."""
-            return FDroidMetadataFetcher(cache_dir="./cache/metadata")
-
         metadata_fetcher = get_metadata_fetcher()
 
         # Show cache statistics
@@ -616,7 +638,7 @@ def show_package_analysis(analyzer: AppMetricsAnalyzer, dates: list) -> None:
         )
 
         # Get packages with download data
-        download_packages_df = analyzer.get_all_packages_with_downloads(dates)
+        download_packages_df = get_all_packages_with_downloads_cached(analyzer, dates)
 
         if not download_packages_df.empty:
             st.write(
@@ -843,7 +865,7 @@ def show_server_comparison(analyzer: AppMetricsAnalyzer, dates: list) -> None:
         )
 
         # Get time series data to show server activity over time
-        ts_data = analyzer.get_time_series_data(dates)
+        ts_data = get_time_series_data_cached(analyzer, dates)
 
         if not ts_data.empty:
             fig = go.Figure()

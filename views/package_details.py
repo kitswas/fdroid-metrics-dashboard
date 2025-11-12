@@ -12,6 +12,20 @@ from etl.analyzer_apps import AppMetricsAnalyzer
 from etl.fdroid_metadata import FDroidMetadataFetcher
 
 
+@st.cache_resource
+def get_metadata_fetcher() -> FDroidMetadataFetcher:
+    """Get a cached instance of the metadata fetcher."""
+    return FDroidMetadataFetcher(cache_dir="./cache/metadata")
+
+
+@st.cache_data
+def get_all_packages_with_downloads_cached(
+    _analyzer: AppMetricsAnalyzer, dates: list[str]
+) -> pd.DataFrame:
+    """Get cached all packages with downloads data."""
+    return _analyzer.get_all_packages_with_downloads(dates)
+
+
 def show_package_details_page(
     package_id: str, analyzer: AppMetricsAnalyzer, dates: list
 ) -> None:
@@ -56,7 +70,7 @@ def show_package_details_page(
     # Try to fetch metadata from F-Droid
     st.subheader("📋 Package Information")
     try:
-        fetcher = FDroidMetadataFetcher()
+        fetcher = get_metadata_fetcher()
         metadata = fetcher.get_package_metadata(package_id)
 
         if metadata:
@@ -438,7 +452,7 @@ def show_package_search_and_select(analyzer: AppMetricsAnalyzer, dates: list) ->
     st.subheader("🔍 Search Packages")
 
     # Get all packages with downloads
-    packages_df = analyzer.get_all_packages_with_downloads(dates)
+    packages_df = get_all_packages_with_downloads_cached(analyzer, dates)
 
     if packages_df.empty:
         st.warning("No packages with download data found in the selected date range.")

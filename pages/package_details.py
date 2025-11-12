@@ -5,7 +5,7 @@ Package details page for F-Droid dashboard
 import pandas as pd
 import streamlit as st
 
-from etl.analyzer_apps import AppMetricsAnalyzer
+from views.apps import get_app_analyzer
 from views.package_details import (
     show_package_details_page,
     show_package_search_and_select,
@@ -37,7 +37,7 @@ if package_id:
         st.rerun()
 
     # Initialize analyzer and get dates
-    analyzer = AppMetricsAnalyzer()
+    analyzer = get_app_analyzer()
     available_dates = analyzer.get_available_dates()
 
     if not available_dates:
@@ -84,7 +84,7 @@ else:
     )
 
     # Initialize analyzer
-    analyzer = AppMetricsAnalyzer()
+    analyzer = get_app_analyzer()
 
     # Date selection
     available_dates = analyzer.get_available_dates()
