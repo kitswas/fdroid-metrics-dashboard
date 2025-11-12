@@ -99,12 +99,25 @@ def show_data_fetcher(data_type: str, key_prefix: str = "") -> bool:
         ]
 
         if data_type == "apps":
-            # For apps, we fetch from 4 servers
+            # For apps, we now intelligently check per-server availability
             num_servers = len(fetcher.servers)
-            total_available = len(available_in_range) * num_servers
+
+            # Get per-server availability to show realistic numbers
+            server_dates = fetcher._get_apps_per_server_dates()
+            available_per_server = {
+                server: len([d for d in available_in_range if d in dates])
+                for server, dates in server_dates.items()
+            }
+            total_available = sum(available_per_server.values())
+
             st.info(
-                f"📊 Found **{len(available_in_range)}** available snapshots in date range "
-                f"(**{total_available} files** across {num_servers} servers will be downloaded)"
+                f"📊 Found **{len(available_in_range)}** available snapshots in date range\n\n"
+                f"**Files to download:** {total_available} (across {num_servers} servers)\n\n"
+                f"**Per-server availability:**\n"
+                + "\n".join(
+                    f"- {server}: {count} files"
+                    for server, count in available_per_server.items()
+                )
             )
         else:
             st.info(
@@ -158,17 +171,24 @@ def fetch_data_with_progress(
         # Show results
         st.subheader("📋 Fetch Results")
 
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3, col4 = st.columns(4)
         with col1:
             st.metric("Total Files", results["total_files"])
         with col2:
             st.metric("✅ Successful", results["successful"], delta=None)
         with col3:
             st.metric("❌ Failed", results["failed"], delta=None)
+        with col4:
+            st.metric("⏭️ Skipped", results["skipped"], delta=None)
 
         # Show success/failure breakdown
         if results["successful"] > 0:
             st.success(f"Successfully downloaded {results['successful']} files!")
+
+        if results["skipped"] > 0:
+            st.info(
+                f"ℹ️ {results['skipped']} files were skipped because they are not available on those servers"
+            )
 
         if results["failed"] > 0:
             st.error(f"Failed to download {results['failed']} files")

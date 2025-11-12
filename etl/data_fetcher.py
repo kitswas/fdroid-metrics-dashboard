@@ -133,6 +133,41 @@ class DataFetcher:
             logger.error(f"Failed to fetch app data index: {e}")
             return []
 
+    def _get_apps_per_server_dates(self) -> dict[str, set[str]]:
+        """
+        Get available app data dates per server.
+
+        Returns:
+            Dictionary mapping server names to sets of available date strings.
+            If a server's index fails to fetch, it maps to an empty set.
+        """
+        server_dates: dict[str, set[str]] = {}
+
+        for server in self.servers:
+            try:
+                index_url = f"{self.apps_base_url}/{server}/index.json"
+                response = requests.get(
+                    index_url, timeout=fetcher_config.REQUEST_TIMEOUT
+                )
+                response.raise_for_status()
+                index = response.json()
+
+                available: set[str] = set()
+                for filename in index:
+                    try:
+                        date_str = filename.replace(".json", "")
+                        datetime.strptime(date_str, "%Y-%m-%d")
+                        available.add(date_str)
+                    except ValueError:
+                        continue
+
+                server_dates[server] = available
+            except (requests.RequestException, json.JSONDecodeError) as e:
+                logger.warning(f"Failed to fetch index for {server}: {e}")
+                server_dates[server] = set()
+
+        return server_dates
+
     def get_local_dates(self, data_type: str) -> list[str]:
         """
         Get available dates from local data files.
@@ -231,8 +266,10 @@ class DataFetcher:
                 dates_to_fetch, progress_callback, status_callback
             )
         elif data_type == "apps":
+            # Get per-server availability for apps
+            server_dates = self._get_apps_per_server_dates()
             return self._fetch_apps_dates(
-                dates_to_fetch, progress_callback, status_callback
+                dates_to_fetch, server_dates, progress_callback, status_callback
             )
         else:
             raise ValueError("data_type must be 'search' or 'apps'")
@@ -289,28 +326,58 @@ class DataFetcher:
     def _fetch_apps_dates(
         self,
         dates: list[str],
+        server_dates: dict[str, set[str]],
         progress_callback: Callable[[float], None] | None = None,
         status_callback: Callable[[str], None] | None = None,
     ) -> dict[str, Any]:
-        """Fetch app data for specified dates from all servers, overwriting existing files."""
+        """Fetch app data for specified dates from all servers, overwriting existing files.
+
+        Args:
+            dates: List of date strings to fetch
+            server_dates: Dictionary mapping server names to sets of available dates
+            progress_callback: Optional callback for progress updates
+            status_callback: Optional callback for status messages
+
+        Only attempts to download files that are actually available on each server.
+        """
         # Create data directory if it doesn't exist
         self.apps_data_dir.mkdir(parents=True, exist_ok=True)
 
+        # Calculate total operations based on what's actually available
+        total_operations = sum(
+            sum(1 for date in dates if date in server_dates.get(server, set()))
+            for server in self.servers
+        )
+
+        if total_operations == 0:
+            return {
+                "total_files": 0,
+                "successful": 0,
+                "failed": 0,
+                "skipped": 0,
+                "errors": ["No files available to download"],
+            }
+
         results = {
-            "total_files": len(dates) * len(self.servers),
+            "total_files": total_operations,
             "successful": 0,
             "failed": 0,
-            "skipped": 0,
+            "skipped": len(dates) * len(self.servers) - total_operations,
             "errors": [],
         }
 
-        total_operations = len(dates) * len(self.servers)
         current_operation = 0
 
         for date in dates:
             for server in self.servers:
+                # Skip if this server doesn't have this date
+                if date not in server_dates.get(server, set()):
+                    continue
+
                 current_operation += 1
-                progress = current_operation / total_operations
+                progress = (
+                    current_operation / total_operations if total_operations > 0 else 0
+                )
                 if progress_callback:
                     progress_callback(progress)
                 if status_callback:
