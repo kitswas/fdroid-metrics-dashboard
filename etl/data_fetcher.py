@@ -341,12 +341,10 @@ class DataFetcher:
         # Create data directory if it doesn't exist
         self.apps_data_dir.mkdir(parents=True, exist_ok=True)
 
-        # Calculate total operations based on what's actually available
         total_operations = sum(
             sum(1 for date in dates if date in server_dates.get(server, set()))
             for server in self.servers
         )
-
         if total_operations == 0:
             return {
                 "total_files": 0,
@@ -354,51 +352,47 @@ class DataFetcher:
                 "failed": 0,
                 "errors": ["No files available to download"],
             }
-
         results = {
             "total_files": total_operations,
             "successful": 0,
             "failed": 0,
             "errors": [],
         }
-
-        current_operation = 0
-
-        for date in dates:
-            for server in self.servers:
-                # Skip if this server doesn't have this date
-                if date not in server_dates.get(server, set()):
-                    continue
-
-                current_operation += 1
-                progress = (
-                    current_operation / total_operations if total_operations > 0 else 0
-                )
-                if progress_callback:
-                    progress_callback(progress)
-                if status_callback:
-                    status_callback(f"Fetching app data for {server} on {date}...")
-
-                server_dir = self.apps_data_dir / server
-                server_dir.mkdir(parents=True, exist_ok=True)
-                filepath = server_dir / f"{date}.json"
-
-                try:
+        op_count = 0
+        batch_size = (
+            fetcher_config.BATCH_SIZE
+        )  # Number of concurrent requests per batch
+        session = requests.Session()
+        for batch_start in range(0, len(dates), batch_size):
+            batch_dates = dates[batch_start : batch_start + batch_size]
+            for date in batch_dates:
+                for server in self.servers:
+                    if date not in server_dates.get(server, set()):
+                        continue
                     url = f"{self.apps_base_url}/{server}/{date}.json"
-                    response = requests.get(url, timeout=fetcher_config.REQUEST_TIMEOUT)
-                    response.raise_for_status()
-
-                    with open(filepath, "w", encoding="utf-8") as f:
-                        json.dump(response.json(), f, indent=2)
-
-                    results["successful"] += 1
-
-                except (requests.RequestException, json.JSONDecodeError, OSError) as e:
-                    error_msg = f"Failed to download {server}/{date}: {str(e)}"
-                    results["errors"].append(error_msg)
-                    results["failed"] += 1
-                    logger.warning(error_msg)
-
+                    server_dir = self.apps_data_dir / server
+                    server_dir.mkdir(parents=True, exist_ok=True)
+                    filepath = server_dir / f"{date}.json"
+                    try:
+                        response = session.get(
+                            url, timeout=fetcher_config.REQUEST_TIMEOUT
+                        )
+                        response.raise_for_status()
+                        with open(filepath, "w", encoding="utf-8") as f:
+                            json.dump(response.json(), f, indent=2)
+                        results["successful"] += 1
+                    except (
+                        requests.RequestException,
+                        json.JSONDecodeError,
+                        OSError,
+                    ) as e:
+                        error_msg = f"Failed to download {server}/{date}: {str(e)}"
+                        results["errors"].append(error_msg)
+                        results["failed"] += 1
+                        logger.warning(error_msg)
+                    op_count += 1
+                    if progress_callback:
+                        progress_callback(op_count / total_operations)
         if progress_callback:
             progress_callback(1.0)
         if status_callback:

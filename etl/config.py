@@ -21,6 +21,7 @@ class DataFetcherConfig:
     REQUEST_TIMEOUT: int = 30
     MAX_DATE_RANGE_DAYS: int = 732  # 2 years
     RATE_LIMIT_INTERVAL: float = 0.1  # seconds between requests
+    BATCH_SIZE: int = 8  # Number of concurrent requests per batch
 
 
 @dataclass(frozen=True)
