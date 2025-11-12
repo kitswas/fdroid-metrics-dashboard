@@ -271,33 +271,21 @@ class AppMetricsAnalyzer:
         if dates is None:
             dates = self.get_available_dates()
 
-        all_paths = {}
-
+        # Collect all path-date combinations
+        path_records = []
         for date in dates:
             try:
                 data = self.load_merged_data(date)
                 paths = data.get("paths", {})
 
                 for path, path_data in paths.items():
-                    if path not in all_paths:
-                        all_paths[path] = {
-                            "path": path,
-                            "total_hits": 0,
-                            "appearances": 0,
-                            "avg_hits": 0,
-                            "dates": [],
-                        }
-
                     hits = (
                         path_data.get("hits", 0)
                         if isinstance(path_data, dict)
                         else path_data
                     )
-                    all_paths[path]["total_hits"] += hits
-                    # Only count as an appearance if there were actual hits
-                    if hits > 0:
-                        all_paths[path]["appearances"] += 1
-                        all_paths[path]["dates"].append(date)
+                    if hits > 0:  # Only include paths with actual hits
+                        path_records.append({"path": path, "date": date, "hits": hits})
 
             except FileNotFoundError:
                 # Skip missing data files
@@ -307,16 +295,31 @@ class AppMetricsAnalyzer:
                 logger.warning(f"Error processing date {date}: {e}")
                 continue
 
-        # Calculate averages
-        for path_stats in all_paths.values():
-            if path_stats["appearances"] > 0:
-                path_stats["avg_hits"] = (
-                    path_stats["total_hits"] / path_stats["appearances"]
-                )
+        # Convert to DataFrame and use vectorized operations
+        if not path_records:
+            return pd.DataFrame(
+                columns=["path", "total_hits", "appearances", "avg_hits", "dates"]
+            )
 
-        # Convert to DataFrame
-        df = pd.DataFrame(list(all_paths.values()))
-        return df.sort_values("total_hits", ascending=False)
+        df = pd.DataFrame(path_records)
+
+        # Group by path and aggregate
+        path_analysis = (
+            df.groupby("path")
+            .agg(
+                total_hits=("hits", "sum"),
+                appearances=("date", "count"),  # Count of dates with hits
+                dates=("date", lambda x: sorted(list(x.unique()))),
+            )
+            .reset_index()
+        )
+
+        # Calculate average hits per active week
+        path_analysis["avg_hits"] = (
+            path_analysis["total_hits"] / path_analysis["appearances"]
+        )
+
+        return path_analysis.sort_values("total_hits", ascending=False)
 
     def get_country_analysis(self, dates: list[str] | None = None) -> pd.DataFrame:
         """
@@ -331,26 +334,18 @@ class AppMetricsAnalyzer:
         if dates is None:
             dates = self.get_available_dates()
 
-        country_data = {}
-
+        # Collect all country-date combinations
+        country_records = []
         for date in dates:
             try:
                 data = self.load_merged_data(date)
                 countries = data.get("hitsPerCountry", {})
 
                 for country, hits in countries.items():
-                    if country not in country_data:
-                        country_data[country] = {
-                            "country": country,
-                            "total_hits": 0,
-                            "appearances": 0,
-                            "avg_hits": 0,
-                        }
-
-                    country_data[country]["total_hits"] += hits
-                    # Only count as an appearance if there were actual hits
-                    if hits > 0:
-                        country_data[country]["appearances"] += 1
+                    if hits > 0:  # Only include countries with actual hits
+                        country_records.append(
+                            {"country": country, "date": date, "hits": hits}
+                        )
 
             except FileNotFoundError:
                 # Skip missing data files
@@ -360,13 +355,30 @@ class AppMetricsAnalyzer:
                 logger.warning(f"Error processing date {date}: {e}")
                 continue
 
-        # Calculate averages
-        for stats in country_data.values():
-            if stats["appearances"] > 0:
-                stats["avg_hits"] = stats["total_hits"] / stats["appearances"]
+        # Convert to DataFrame and use vectorized operations
+        if not country_records:
+            return pd.DataFrame(
+                columns=["country", "total_hits", "appearances", "avg_hits"]
+            )
 
-        df = pd.DataFrame(list(country_data.values()))
-        return df.sort_values("total_hits", ascending=False)
+        df = pd.DataFrame(country_records)
+
+        # Group by country and aggregate
+        country_analysis = (
+            df.groupby("country")
+            .agg(
+                total_hits=("hits", "sum"),
+                appearances=("date", "count"),  # Count of dates with hits
+            )
+            .reset_index()
+        )
+
+        # Calculate average hits per active week
+        country_analysis["avg_hits"] = (
+            country_analysis["total_hits"] / country_analysis["appearances"]
+        )
+
+        return country_analysis.sort_values("total_hits", ascending=False)
 
     def get_server_comparison(self, date: str) -> pd.DataFrame:
         """Compare metrics across servers for a specific date."""
@@ -605,16 +617,22 @@ class AppMetricsAnalyzer:
         if dates is None:
             dates = self.get_available_dates()
 
-        all_packages = {}
-
+        # Collect all package activity records
+        package_records = []
         for date in dates:
             try:
                 data = self.load_merged_data(date)
                 paths = data.get("paths", {})
 
                 for path, path_data in paths.items():
+                    hits = (
+                        path_data.get("hits", 0)
+                        if isinstance(path_data, dict)
+                        else path_data
+                    )
+
                     # Check for APK downloads
-                    if path.startswith("/repo/") and path.endswith(".apk"):
+                    if path.startswith("/repo/") and path.endswith(".apk") and hits > 0:
                         filename = path.replace("/repo/", "").replace(".apk", "")
 
                         # Handle potential query parameters
@@ -626,45 +644,29 @@ class AppMetricsAnalyzer:
                             parts = filename.rsplit("_", 1)
                             if len(parts) == 2:
                                 pkg_name, version = parts
-
-                                if pkg_name not in all_packages:
-                                    all_packages[pkg_name] = {
+                                package_records.append(
+                                    {
                                         "package_id": pkg_name,
-                                        "total_downloads": 0,
-                                        "versions": set(),
+                                        "date": date,
+                                        "version": version,
+                                        "downloads": hits,
                                         "api_hits": 0,
-                                        "dates_active": set(),
                                     }
-
-                                hits = (
-                                    path_data.get("hits", 0)
-                                    if isinstance(path_data, dict)
-                                    else path_data
                                 )
-                                all_packages[pkg_name]["total_downloads"] += hits
-                                all_packages[pkg_name]["versions"].add(version)
-                                all_packages[pkg_name]["dates_active"].add(date)
 
                     # Check for API hits
-                    elif path.startswith("/api/v1/packages/"):
+                    elif path.startswith("/api/v1/packages/") and hits > 0:
                         pkg_name = path.replace("/api/v1/packages/", "").strip()
                         if pkg_name and "/" not in pkg_name:
-                            if pkg_name not in all_packages:
-                                all_packages[pkg_name] = {
+                            package_records.append(
+                                {
                                     "package_id": pkg_name,
-                                    "total_downloads": 0,
-                                    "versions": set(),
-                                    "api_hits": 0,
-                                    "dates_active": set(),
+                                    "date": date,
+                                    "version": None,  # No version for API hits
+                                    "downloads": 0,
+                                    "api_hits": hits,
                                 }
-
-                            hits = (
-                                path_data.get("hits", 0)
-                                if isinstance(path_data, dict)
-                                else path_data
                             )
-                            all_packages[pkg_name]["api_hits"] += hits
-                            all_packages[pkg_name]["dates_active"].add(date)
 
             except FileNotFoundError:
                 continue
@@ -672,18 +674,33 @@ class AppMetricsAnalyzer:
                 logger.warning(f"Error processing date {date}: {e}")
                 continue
 
-        # Convert to DataFrame
-        records = []
-        for pkg_data in all_packages.values():
-            records.append(
-                {
-                    "package_id": pkg_data["package_id"],
-                    "total_downloads": pkg_data["total_downloads"],
-                    "total_versions": len(pkg_data["versions"]),
-                    "api_hits": pkg_data["api_hits"],
-                    "dates_active": len(pkg_data["dates_active"]),
-                }
+        # Convert to DataFrame and use vectorized operations
+        if not package_records:
+            return pd.DataFrame(
+                columns=[
+                    "package_id",
+                    "total_downloads",
+                    "total_versions",
+                    "api_hits",
+                    "dates_active",
+                ]
             )
 
-        df = pd.DataFrame(records)
-        return df.sort_values("total_downloads", ascending=False)
+        df = pd.DataFrame(package_records)
+
+        # Group by package_id and aggregate
+        package_analysis = (
+            df.groupby("package_id")
+            .agg(
+                total_downloads=("downloads", "sum"),
+                total_versions=(
+                    "version",
+                    lambda x: len(x.dropna().unique()),
+                ),  # Count unique non-null versions
+                api_hits=("api_hits", "sum"),
+                dates_active=("date", lambda x: len(x.unique())),  # Count unique dates
+            )
+            .reset_index()
+        )
+
+        return package_analysis.sort_values("total_downloads", ascending=False)

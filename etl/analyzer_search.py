@@ -146,33 +146,23 @@ class SearchMetricsAnalyzer:
         if dates is None:
             dates = self.get_available_dates()
 
-        all_queries = {}
-
+        # Collect all query-date combinations
+        query_records = []
         for date in dates:
             try:
                 data = self.load_data(date)
                 queries = data.get("queries", {})
 
                 for query, query_data in queries.items():
-                    if query not in all_queries:
-                        all_queries[query] = {
-                            "query": query,
-                            "total_hits": 0,
-                            "appearances": 0,
-                            "avg_hits": 0,
-                            "dates": [],
-                        }
-
                     hits = (
                         query_data.get("hits", 0)
                         if isinstance(query_data, dict)
                         else query_data
                     )
-                    all_queries[query]["total_hits"] += hits
-                    # Only count as an appearance if there were actual hits
-                    if hits > 0:
-                        all_queries[query]["appearances"] += 1
-                        all_queries[query]["dates"].append(date)
+                    if hits > 0:  # Only include queries with actual hits
+                        query_records.append(
+                            {"query": query, "date": date, "hits": hits}
+                        )
 
             except FileNotFoundError:
                 # Skip missing data files
@@ -182,16 +172,31 @@ class SearchMetricsAnalyzer:
                 logger.warning(f"Error processing date {date}: {e}")
                 continue
 
-        # Calculate averages
-        for query_stats in all_queries.values():
-            if query_stats["appearances"] > 0:
-                query_stats["avg_hits"] = (
-                    query_stats["total_hits"] / query_stats["appearances"]
-                )
+        # Convert to DataFrame and use vectorized operations
+        if not query_records:
+            return pd.DataFrame(
+                columns=["query", "total_hits", "appearances", "avg_hits", "dates"]
+            )
 
-        # Convert to DataFrame
-        df = pd.DataFrame(list(all_queries.values()))
-        return df.sort_values("total_hits", ascending=False)
+        df = pd.DataFrame(query_records)
+
+        # Group by query and aggregate
+        query_analysis = (
+            df.groupby("query")
+            .agg(
+                total_hits=("hits", "sum"),
+                appearances=("date", "count"),  # Count of dates with hits
+                dates=("date", lambda x: sorted(list(x.unique()))),
+            )
+            .reset_index()
+        )
+
+        # Calculate average hits per active week
+        query_analysis["avg_hits"] = (
+            query_analysis["total_hits"] / query_analysis["appearances"]
+        )
+
+        return query_analysis.sort_values("total_hits", ascending=False)
 
     def get_country_analysis(self, dates: list[str] | None = None) -> pd.DataFrame:
         """
@@ -206,26 +211,18 @@ class SearchMetricsAnalyzer:
         if dates is None:
             dates = self.get_available_dates()
 
-        country_data = {}
-
+        # Collect all country-date combinations
+        country_records = []
         for date in dates:
             try:
                 data = self.load_data(date)
                 countries = data.get("hitsPerCountry", {})
 
                 for country, hits in countries.items():
-                    if country not in country_data:
-                        country_data[country] = {
-                            "country": country,
-                            "total_hits": 0,
-                            "appearances": 0,
-                            "avg_hits": 0,
-                        }
-
-                    country_data[country]["total_hits"] += hits
-                    # Only count as an appearance if there were actual hits
-                    if hits > 0:
-                        country_data[country]["appearances"] += 1
+                    if hits > 0:  # Only include countries with actual hits
+                        country_records.append(
+                            {"country": country, "date": date, "hits": hits}
+                        )
 
             except FileNotFoundError:
                 # Skip missing data files
@@ -235,13 +232,30 @@ class SearchMetricsAnalyzer:
                 logger.warning(f"Error processing date {date}: {e}")
                 continue
 
-        # Calculate averages
-        for stats in country_data.values():
-            if stats["appearances"] > 0:
-                stats["avg_hits"] = stats["total_hits"] / stats["appearances"]
+        # Convert to DataFrame and use vectorized operations
+        if not country_records:
+            return pd.DataFrame(
+                columns=["country", "total_hits", "appearances", "avg_hits"]
+            )
 
-        df = pd.DataFrame(list(country_data.values()))
-        return df.sort_values("total_hits", ascending=False)
+        df = pd.DataFrame(country_records)
+
+        # Group by country and aggregate
+        country_analysis = (
+            df.groupby("country")
+            .agg(
+                total_hits=("hits", "sum"),
+                appearances=("date", "count"),  # Count of dates with hits
+            )
+            .reset_index()
+        )
+
+        # Calculate average hits per active week
+        country_analysis["avg_hits"] = (
+            country_analysis["total_hits"] / country_analysis["appearances"]
+        )
+
+        return country_analysis.sort_values("total_hits", ascending=False)
 
     def _get_top_items(self, data: dict, limit: int) -> list[tuple[str, int]]:
         """
