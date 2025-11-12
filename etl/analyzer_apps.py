@@ -36,6 +36,10 @@ class AppMetricsAnalyzer:
         # HTTP servers to aggregate data from
         self.servers = SERVERS
 
+        # Constants for path prefixes
+        self.API_PACKAGES_PREFIX = "/api/v1/packages/"
+        self.REPO_PREFIX = "/repo/"
+
     def get_available_dates(self) -> list[str]:
         """
         Get list of available data dates across all servers.
@@ -60,7 +64,7 @@ class AppMetricsAnalyzer:
                 except ValueError:
                     continue
 
-        return sorted(list(dates))
+        return sorted(dates)
 
     def load_data(self, date: str, server: str) -> dict:
         """
@@ -309,7 +313,7 @@ class AppMetricsAnalyzer:
             .agg(
                 total_hits=("hits", "sum"),
                 appearances=("date", "count"),  # Count of dates with hits
-                dates=("date", lambda x: sorted(list(x.unique()))),
+                dates=("date", lambda x: sorted(x.unique())),
             )
             .reset_index()
         )
@@ -435,9 +439,11 @@ class AppMetricsAnalyzer:
 
                 for path, path_data in paths.items():
                     # Filter for package API paths
-                    if path.startswith("/api/v1/packages/"):
+                    if path.startswith(self.API_PACKAGES_PREFIX):
                         # Extract package name from path
-                        package_name = path.replace("/api/v1/packages/", "").strip()
+                        package_name = path.replace(
+                            self.API_PACKAGES_PREFIX, ""
+                        ).strip()
 
                         # Skip empty or invalid package names
                         if not package_name or "/" in package_name:
@@ -543,9 +549,11 @@ class AppMetricsAnalyzer:
 
                 for path, path_data in paths.items():
                     # Check for APK downloads: /repo/{package_id}_{version}.apk
-                    if path.startswith("/repo/") and path.endswith(".apk"):
+                    if path.startswith(self.REPO_PREFIX) and path.endswith(".apk"):
                         # Extract package name and version from path
-                        filename = path.replace("/repo/", "").replace(".apk", "")
+                        filename = path.replace(self.REPO_PREFIX, "").replace(
+                            ".apk", ""
+                        )
 
                         # Handle potential query parameters (e.g., &pxdate=2025-08-05)
                         if "&" in filename:
@@ -579,7 +587,7 @@ class AppMetricsAnalyzer:
                                             )
 
                     # Check for API hits: /api/v1/packages/{package_id}
-                    elif path == f"/api/v1/packages/{package_id}":
+                    elif path == f"{self.API_PACKAGES_PREFIX}{package_id}":
                         hits = (
                             path_data.get("hits", 0)
                             if isinstance(path_data, dict)
@@ -632,8 +640,14 @@ class AppMetricsAnalyzer:
                     )
 
                     # Check for APK downloads
-                    if path.startswith("/repo/") and path.endswith(".apk") and hits > 0:
-                        filename = path.replace("/repo/", "").replace(".apk", "")
+                    if (
+                        path.startswith(self.REPO_PREFIX)
+                        and path.endswith(".apk")
+                        and hits > 0
+                    ):
+                        filename = path.replace(self.REPO_PREFIX, "").replace(
+                            ".apk", ""
+                        )
 
                         # Handle potential query parameters
                         if "&" in filename:
@@ -655,8 +669,8 @@ class AppMetricsAnalyzer:
                                 )
 
                     # Check for API hits
-                    elif path.startswith("/api/v1/packages/") and hits > 0:
-                        pkg_name = path.replace("/api/v1/packages/", "").strip()
+                    elif path.startswith(self.API_PACKAGES_PREFIX) and hits > 0:
+                        pkg_name = path.replace(self.API_PACKAGES_PREFIX, "").strip()
                         if pkg_name and "/" not in pkg_name:
                             package_records.append(
                                 {

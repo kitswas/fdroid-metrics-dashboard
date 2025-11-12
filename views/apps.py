@@ -17,6 +17,16 @@ from etl.getdata_apps import SERVERS
 
 logger = logging.getLogger(__name__)
 
+# UI Constants
+TOTAL_HITS = "Total Hits"
+ACTIVE_SERVERS = "Active Servers"
+TOTAL_ASCENDING = "total ascending"
+WEEKS_ACTIVE = "Weeks Active"
+TOTAL_DOWNLOADS = "Total Downloads"
+PACKAGE_ID = "Package ID"
+API_HITS = "API Hits"
+ACTIVE_DATES = "Active Dates"
+
 
 @st.cache_resource
 def get_app_analyzer() -> AppMetricsAnalyzer:
@@ -182,9 +192,9 @@ def show_apps_overview(analyzer: AppMetricsAnalyzer, dates: list) -> None:
 
         col1, col2, col3, col4 = st.columns(4)
         with col1:
-            st.metric("Total Hits", f"{summary['total_hits']:,}")
+            st.metric(TOTAL_HITS, f"{summary['total_hits']:,}")
         with col2:
-            st.metric("Active Servers", f"{summary['servers_active']}/{len(SERVERS)}")
+            st.metric(ACTIVE_SERVERS, f"{summary['servers_active']}/{len(SERVERS)}")
         with col3:
             st.metric("Unique Paths", f"{summary['unique_paths']:,}")
         with col4:
@@ -209,9 +219,7 @@ def show_apps_overview(analyzer: AppMetricsAnalyzer, dates: list) -> None:
                 fig = px.bar(
                     paths_df.head(10), x="Hits", y="Short Path", orientation="h"
                 )
-                fig.update_layout(
-                    height=400, yaxis={"categoryorder": "total ascending"}
-                )
+                fig.update_layout(height=400, yaxis={"categoryorder": TOTAL_ASCENDING})
                 st.plotly_chart(fig, use_container_width=True)
 
         with col2:
@@ -232,7 +240,7 @@ def show_apps_overview(analyzer: AppMetricsAnalyzer, dates: list) -> None:
             # Summary metrics
             col1, col2, col3, col4 = st.columns(4)
             with col1:
-                st.metric("Total Hits", f"{ts_data['total_hits'].sum():,}")
+                st.metric(TOTAL_HITS, f"{ts_data['total_hits'].sum():,}")
             with col2:
                 st.metric("Avg Weekly Hits", f"{ts_data['total_hits'].mean():.0f}")
             with col3:
@@ -249,16 +257,14 @@ def show_apps_overview(analyzer: AppMetricsAnalyzer, dates: list) -> None:
                 cols=1,
                 subplot_titles=(
                     "Weekly App Hits",
-                    "Active Servers",
+                    ACTIVE_SERVERS,
                     "Unique Request Paths",
                 ),
                 vertical_spacing=0.1,
             )
 
             fig.add_trace(
-                go.Scatter(
-                    x=ts_data["date"], y=ts_data["total_hits"], name="Total Hits"
-                ),
+                go.Scatter(x=ts_data["date"], y=ts_data["total_hits"], name=TOTAL_HITS),
                 row=1,
                 col=1,
             )
@@ -267,7 +273,7 @@ def show_apps_overview(analyzer: AppMetricsAnalyzer, dates: list) -> None:
                 go.Scatter(
                     x=ts_data["date"],
                     y=ts_data["servers_active"],
-                    name="Active Servers",
+                    name=ACTIVE_SERVERS,
                 ),
                 row=2,
                 col=1,
@@ -291,7 +297,7 @@ def show_path_analysis(analyzer: AppMetricsAnalyzer, dates: list) -> None:
     """Show detailed path analysis."""
     st.header("📂 Request Path Analysis")
     st.info(
-        "📊 **Data Frequency:** The data is collected weekly. 'Weeks Active' indicates the number of weeks where the path had actual requests (hits > 0)."
+        f"📊 **Data Frequency:** The data is collected weekly. '{WEEKS_ACTIVE}' indicates the number of weeks where the path had actual requests (hits > 0)."
     )
 
     path_df = analyzer.get_path_analysis(dates)
@@ -376,7 +382,7 @@ def show_path_analysis(analyzer: AppMetricsAnalyzer, dates: list) -> None:
                 orientation="h",
                 title="Path Category Hits",
             )
-            fig.update_layout(yaxis={"categoryorder": "total ascending"})
+            fig.update_layout(yaxis={"categoryorder": TOTAL_ASCENDING})
             st.plotly_chart(fig, use_container_width=True)
 
         # Top paths chart
@@ -391,9 +397,9 @@ def show_path_analysis(analyzer: AppMetricsAnalyzer, dates: list) -> None:
             x="total_hits",
             y="short_path",
             title="Most Requested Paths",
-            labels={"total_hits": "Total Hits", "short_path": "Request Path"},
+            labels={"total_hits": TOTAL_HITS, "short_path": "Request Path"},
         )
-        fig.update_layout(height=600, yaxis={"categoryorder": "total ascending"})
+        fig.update_layout(height=600, yaxis={"categoryorder": TOTAL_ASCENDING})
         st.plotly_chart(fig, use_container_width=True)
 
         # Path statistics table
@@ -406,9 +412,9 @@ def show_path_analysis(analyzer: AppMetricsAnalyzer, dates: list) -> None:
             display_table_df,
             use_container_width=True,
             column_config={
-                "appearances": st.column_config.NumberColumn("Weeks Active"),
+                "appearances": st.column_config.NumberColumn(WEEKS_ACTIVE),
                 "avg_hits": st.column_config.NumberColumn("Avg Hits/Week"),
-                "total_hits": st.column_config.NumberColumn("Total Hits"),
+                "total_hits": st.column_config.NumberColumn(TOTAL_HITS),
             },
         )
 
@@ -420,7 +426,7 @@ def show_package_analysis(analyzer: AppMetricsAnalyzer, dates: list) -> None:
         "Analyze package requests to the F-Droid API (`/api/v1/packages/`) to understand which apps are most accessed."
     )
     st.info(
-        "📊 **Data Frequency:** The data is collected weekly. 'Weeks Active' indicates the number of weeks where the package had actual downloads (hits > 0)."
+        f"📊 **Data Frequency:** The data is collected weekly. '{WEEKS_ACTIVE}' indicates the number of weeks where the package had actual downloads (hits > 0)."
     )
 
     package_df = analyzer.get_package_analysis(dates)
@@ -530,7 +536,7 @@ def show_package_analysis(analyzer: AppMetricsAnalyzer, dates: list) -> None:
                 orientation="h",
                 title="Package Category Hits",
             )
-            fig.update_layout(yaxis={"categoryorder": "total ascending"})
+            fig.update_layout(yaxis={"categoryorder": TOTAL_ASCENDING})
             st.plotly_chart(fig, use_container_width=True)
 
         # Top packages chart
@@ -545,10 +551,10 @@ def show_package_analysis(analyzer: AppMetricsAnalyzer, dates: list) -> None:
             x="total_hits",
             y="short_name",
             title="Most Requested F-Droid Packages",
-            labels={"total_hits": "Total Hits", "short_name": "Package Name"},
+            labels={"total_hits": TOTAL_HITS, "short_name": "Package Name"},
             color="category",
         )
-        fig.update_layout(height=600, yaxis={"categoryorder": "total ascending"})
+        fig.update_layout(height=600, yaxis={"categoryorder": TOTAL_ASCENDING})
         st.plotly_chart(fig, use_container_width=True)
 
         # Average hits over time analysis
@@ -567,7 +573,7 @@ def show_package_analysis(analyzer: AppMetricsAnalyzer, dates: list) -> None:
                 hover_name="package_name",
                 title="Package Consistency vs Popularity",
                 labels={
-                    "appearances": "Weeks Active",
+                    "appearances": WEEKS_ACTIVE,
                     "avg_hits": "Average Hits per Week",
                 },
             )
@@ -582,8 +588,8 @@ def show_package_analysis(analyzer: AppMetricsAnalyzer, dates: list) -> None:
         display_table_df = display_table_df.rename(
             columns={
                 "package_name": "Package Name",
-                "total_hits": "Total Hits",
-                "appearances": "Weeks Active",
+                "total_hits": TOTAL_HITS,
+                "appearances": WEEKS_ACTIVE,
                 "avg_hits": "Avg Hits/Week",
                 "category": "Category",
             }
@@ -616,17 +622,24 @@ def show_package_analysis(analyzer: AppMetricsAnalyzer, dates: list) -> None:
                 # Add package details link functionality
                 st.dataframe(search_display, use_container_width=True)
 
+                def format_package_option(x: str) -> str:
+                    if x == "":
+                        return "Choose a package..."
+                    elif x in search_results["package_name"].tolist():
+                        hits = search_results[search_results["package_name"] == x][
+                            "total_hits"
+                        ].iloc[0]
+                        return f"{x} ({hits:,} API hits)"
+                    else:
+                        return x
+
                 # Package selection for detailed view
                 if len(search_results) > 0:
                     st.subheader("📦 View Package Details")
                     selected_package = st.selectbox(
                         "Select a package to view detailed download statistics:",
                         options=[""] + search_results["package_name"].tolist(),
-                        format_func=lambda x: "Choose a package..."
-                        if x == ""
-                        else f"{x} ({search_results[search_results['package_name'] == x]['total_hits'].iloc[0]:,} API hits)"
-                        if x in search_results["package_name"].tolist()
-                        else x,
+                        format_func=format_package_option,
                     )
 
                     if selected_package and selected_package != "":
@@ -665,20 +678,18 @@ def show_package_analysis(analyzer: AppMetricsAnalyzer, dates: list) -> None:
                     orientation="h",
                     title="Top 20 Packages by Downloads",
                     labels={
-                        "total_downloads": "Total Downloads",
-                        "package_id": "Package ID",
+                        "total_downloads": TOTAL_DOWNLOADS,
+                        "package_id": PACKAGE_ID,
                     },
                 )
-                fig.update_layout(
-                    height=600, yaxis={"categoryorder": "total ascending"}
-                )
+                fig.update_layout(height=600, yaxis={"categoryorder": TOTAL_ASCENDING})
                 st.plotly_chart(fig, use_container_width=True)
 
             with col2:
                 # Summary metrics
                 st.metric("Total Packages with Downloads", len(download_packages_df))
                 st.metric(
-                    "Total Downloads",
+                    TOTAL_DOWNLOADS,
                     f"{download_packages_df['total_downloads'].sum():,}",
                 )
                 st.metric(
@@ -707,11 +718,11 @@ def show_package_analysis(analyzer: AppMetricsAnalyzer, dates: list) -> None:
             ].copy()
             display_downloads_df = display_downloads_df.rename(
                 columns={
-                    "package_id": "Package ID",
-                    "total_downloads": "Total Downloads",
+                    "package_id": PACKAGE_ID,
+                    "total_downloads": TOTAL_DOWNLOADS,
                     "total_versions": "Versions",
-                    "api_hits": "API Hits",
-                    "dates_active": "Active Dates",
+                    "api_hits": API_HITS,
+                    "dates_active": ACTIVE_DATES,
                 }
             )
 
@@ -719,27 +730,35 @@ def show_package_analysis(analyzer: AppMetricsAnalyzer, dates: list) -> None:
                 display_downloads_df,
                 use_container_width=True,
                 column_config={
-                    "Package ID": st.column_config.TextColumn("Package ID"),
-                    "Total Downloads": st.column_config.NumberColumn(
+                    PACKAGE_ID: st.column_config.TextColumn(PACKAGE_ID),
+                    TOTAL_DOWNLOADS: st.column_config.NumberColumn(
                         "Downloads", format="%d"
                     ),
                     "Versions": st.column_config.NumberColumn("Versions"),
-                    "API Hits": st.column_config.NumberColumn("API Hits", format="%d"),
-                    "Active Dates": st.column_config.NumberColumn("Active Dates"),
+                    "API Hits": st.column_config.NumberColumn(API_HITS, format="%d"),
+                    "Active Dates": st.column_config.NumberColumn(ACTIVE_DATES),
                 },
             )
 
             # Package selection for detailed view
             st.subheader("🎯 View Detailed Package Information")
             download_package_options = download_packages_df["package_id"].tolist()
+
+            def format_download_package_option(x: str) -> str:
+                if x == "":
+                    return "Choose a package..."
+                elif x in download_package_options:
+                    downloads = download_packages_df[
+                        download_packages_df["package_id"] == x
+                    ]["total_downloads"].iloc[0]
+                    return f"{x} ({downloads:,} downloads)"
+                else:
+                    return x
+
             selected_download_package = st.selectbox(
                 "Select a package to view detailed download statistics:",
                 options=[""] + download_package_options,
-                format_func=lambda x: "Choose a package..."
-                if x == ""
-                else f"{x} ({download_packages_df[download_packages_df['package_id'] == x]['total_downloads'].iloc[0]:,} downloads)"
-                if x in download_package_options
-                else x,
+                format_func=format_download_package_option,
                 key="download_package_select",
             )
 
@@ -797,9 +816,9 @@ def show_apps_geographic_analysis(analyzer: AppMetricsAnalyzer, dates: list) -> 
             x="total_hits",
             y="country",
             title="Top 20 Countries by App Downloads",
-            labels={"total_hits": "Total Hits", "country": "Country"},
+            labels={"total_hits": TOTAL_HITS, "country": "Country"},
         )
-        fig.update_layout(height=600, yaxis={"categoryorder": "total ascending"})
+        fig.update_layout(height=600, yaxis={"categoryorder": TOTAL_ASCENDING})
         st.plotly_chart(fig, use_container_width=True)
 
         # Geographic distribution table
@@ -823,7 +842,7 @@ def show_server_comparison(analyzer: AppMetricsAnalyzer, dates: list) -> None:
         col1, col2, col3, col4 = st.columns(4)
         with col1:
             st.metric(
-                "Active Servers",
+                ACTIVE_SERVERS,
                 f"{len(comparison_df[comparison_df['hits'] > 0])}/{len(SERVERS)}",
             )
         with col2:
@@ -880,15 +899,15 @@ def show_server_comparison(analyzer: AppMetricsAnalyzer, dates: list) -> None:
                     x=ts_data["date"],
                     y=ts_data["servers_active"],
                     mode="lines+markers",
-                    name="Active Servers",
-                    line=dict(width=3),
+                    name=ACTIVE_SERVERS,
+                    line={"width": 3},
                 )
             )
             fig.update_layout(
                 title="Server Activity Over Time",
                 xaxis_title="Date",
                 yaxis_title="Number of Active Servers",
-                yaxis=dict(range=[0, 3.5], dtick=1),
+                yaxis={"range": [0, 3.5], "dtick": 1},
             )
             st.plotly_chart(fig, use_container_width=True)
 
@@ -953,9 +972,9 @@ def show_apps_technical_analysis(analyzer: AppMetricsAnalyzer, dates: list) -> N
         [
             {
                 "Server": server,
-                "Total Hits": stats["hits"],
+                TOTAL_HITS: stats["hits"],
                 "Total Errors": stats["errors"],
-                "Weeks Active": stats["dates"],
+                WEEKS_ACTIVE: stats["dates"],
                 "Error Rate (%)": (stats["errors"] / stats["hits"] * 100)
                 if stats["hits"] > 0
                 else 0,
@@ -975,7 +994,7 @@ def show_apps_technical_analysis(analyzer: AppMetricsAnalyzer, dates: list) -> N
             y="Availability (%)",
             title="Server Availability",
         )
-        fig.update_layout(yaxis=dict(range=[0, 105]))
+        fig.update_layout(yaxis={"range": [0, 105]})
         st.plotly_chart(fig, use_container_width=True)
 
     with col2:
@@ -994,16 +1013,16 @@ def show_apps_technical_analysis(analyzer: AppMetricsAnalyzer, dates: list) -> N
         st.subheader("HTTP Error Analysis")
 
         errors_df = pd.DataFrame(
-            list(all_errors.items()), columns=["Error Code", "Total Hits"]
+            list(all_errors.items()), columns=["Error Code", TOTAL_HITS]
         )
-        errors_df = errors_df.sort_values("Total Hits", ascending=False)
+        errors_df = errors_df.sort_values(TOTAL_HITS, ascending=False)
 
         col1, col2 = st.columns(2)
 
         with col1:
             fig = px.pie(
                 errors_df,
-                values="Total Hits",
+                values=TOTAL_HITS,
                 names="Error Code",
                 title="App Download Error Distribution",
             )

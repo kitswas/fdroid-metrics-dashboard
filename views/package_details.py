@@ -11,6 +11,17 @@ from plotly.subplots import make_subplots
 from etl.analyzer_apps import AppMetricsAnalyzer
 from etl.fdroid_metadata import FDroidMetadataFetcher
 
+# UI Constants
+TOTAL_DOWNLOADS = "Total Downloads"
+MEASUREMENT_PERIOD = "Measurement Period"
+DOWNLOADS_IN_PERIOD = "Downloads in Period"
+API_HITS_IN_PERIOD = "API Hits in Period"
+CUMULATIVE_DOWNLOADS = "Cumulative Downloads"
+CUMULATIVE_API_HITS = "Cumulative API Hits"
+PACKAGE_ID = "Package ID"
+API_HITS = "API Hits"
+ACTIVE_DATES = "Active Dates"
+
 
 @st.cache_resource
 def get_metadata_fetcher() -> FDroidMetadataFetcher:
@@ -32,7 +43,7 @@ def show_package_details_page(
     """Show detailed information for a specific package."""
 
     st.title(f"📦 Package Details: {package_id}")
-    st.markdown(f"**Package ID:** `{package_id}`")
+    st.markdown(f"**{PACKAGE_ID}:** `{package_id}`")
 
     # Get package download data
     package_data = analyzer.get_package_downloads(package_id, dates)
@@ -45,7 +56,7 @@ def show_package_details_page(
         # Show search suggestions
         st.subheader("💡 Search Suggestions")
         st.markdown(
-            "Try searching for packages in the main Apps page or check if the package ID is correct."
+            f"Try searching for packages in the main Apps page or check if the {PACKAGE_ID.lower()} is correct."
         )
 
         if st.button("🔙 Back to Package Browser"):
@@ -59,7 +70,7 @@ def show_package_details_page(
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.metric("Total Downloads", f"{package_data['total_downloads']:,}")
+        st.metric(TOTAL_DOWNLOADS, f"{package_data['total_downloads']:,}")
     with col2:
         st.metric("API Info Requests", f"{package_data['api_hits']:,}")
     with col3:
@@ -307,10 +318,10 @@ def show_package_details_page(
                     period_df,
                     x="period",
                     y="period_downloads",
-                    title="Downloads by Measurement Period",
+                    title=f"Downloads by {MEASUREMENT_PERIOD}",
                     labels={
-                        "period": "Measurement Period",
-                        "period_downloads": "Downloads in Period",
+                        "period": MEASUREMENT_PERIOD,
+                        "period_downloads": DOWNLOADS_IN_PERIOD,
                     },
                     color="period_downloads",
                     color_continuous_scale="Blues",
@@ -326,10 +337,10 @@ def show_package_details_page(
                     period_df,
                     x="period",
                     y="period_api_hits",
-                    title="API Requests by Measurement Period",
+                    title=f"API Requests by {MEASUREMENT_PERIOD}",
                     labels={
-                        "period": "Measurement Period",
-                        "period_api_hits": "API Hits in Period",
+                        "period": MEASUREMENT_PERIOD,
+                        "period_api_hits": API_HITS_IN_PERIOD,
                     },
                     color="period_api_hits",
                     color_continuous_scale="Oranges",
@@ -343,7 +354,7 @@ def show_package_details_page(
             fig_cumulative = make_subplots(
                 rows=2,
                 cols=1,
-                subplot_titles=("Cumulative Downloads", "Cumulative API Requests"),
+                subplot_titles=(CUMULATIVE_DOWNLOADS, "Cumulative API Requests"),
                 vertical_spacing=0.1,
             )
 
@@ -352,8 +363,8 @@ def show_package_details_page(
                     x=ts_df["date"],
                     y=ts_df["cumulative_downloads"],
                     mode="lines+markers",
-                    name="Cumulative Downloads",
-                    line=dict(color="#1f77b4", width=3),
+                    name=CUMULATIVE_DOWNLOADS,
+                    line={"color": "#1f77b4", "width": 3},
                     fill="tozeroy",
                     fillcolor="rgba(31, 119, 180, 0.1)",
                 ),
@@ -366,8 +377,8 @@ def show_package_details_page(
                     x=ts_df["date"],
                     y=ts_df["cumulative_api_hits"],
                     mode="lines+markers",
-                    name="Cumulative API Hits",
-                    line=dict(color="#ff7f0e", width=3),
+                    name=CUMULATIVE_API_HITS,
+                    line={"color": "#ff7f0e", "width": 3},
                     fill="tozeroy",
                     fillcolor="rgba(255, 127, 14, 0.1)",
                 ),
@@ -377,8 +388,8 @@ def show_package_details_page(
 
             fig_cumulative.update_layout(height=500, showlegend=False)
             fig_cumulative.update_xaxes(title_text="Measurement Date", row=2, col=1)
-            fig_cumulative.update_yaxes(title_text="Cumulative Downloads", row=1, col=1)
-            fig_cumulative.update_yaxes(title_text="Cumulative API Hits", row=2, col=1)
+            fig_cumulative.update_yaxes(title_text=CUMULATIVE_DOWNLOADS, row=1, col=1)
+            fig_cumulative.update_yaxes(title_text=CUMULATIVE_API_HITS, row=2, col=1)
 
             st.plotly_chart(fig_cumulative, use_container_width=True)
 
@@ -396,10 +407,10 @@ def show_package_details_page(
 
             display_period_df = display_period_df.rename(
                 columns={
-                    "period": "Measurement Period",
-                    "period_downloads": "Downloads in Period",
-                    "period_api_hits": "API Hits in Period",
-                    "cumulative_downloads": "Total Downloads",
+                    "period": MEASUREMENT_PERIOD,
+                    "period_downloads": DOWNLOADS_IN_PERIOD,
+                    "period_api_hits": API_HITS_IN_PERIOD,
+                    "cumulative_downloads": TOTAL_DOWNLOADS,
                     "cumulative_api_hits": "Total API Hits",
                 }
             )
@@ -408,18 +419,18 @@ def show_package_details_page(
                 display_period_df,
                 use_container_width=True,
                 column_config={
-                    "Measurement Period": st.column_config.TextColumn("Period"),
-                    "Downloads in Period": st.column_config.NumberColumn(
+                    MEASUREMENT_PERIOD: st.column_config.TextColumn("Period"),
+                    DOWNLOADS_IN_PERIOD: st.column_config.NumberColumn(
                         "Period Downloads", format="%d"
                     ),
-                    "API Hits in Period": st.column_config.NumberColumn(
+                    API_HITS_IN_PERIOD: st.column_config.NumberColumn(
                         "Period API Hits", format="%d"
                     ),
                     "Total Downloads": st.column_config.NumberColumn(
-                        "Cumulative Downloads", format="%d"
+                        CUMULATIVE_DOWNLOADS, format="%d"
                     ),
                     "Total API Hits": st.column_config.NumberColumn(
-                        "Cumulative API Hits", format="%d"
+                        CUMULATIVE_API_HITS, format="%d"
                     ),
                 },
             )
@@ -461,7 +472,7 @@ def show_package_search_and_select(analyzer: AppMetricsAnalyzer, dates: list) ->
     # Search interface
     search_term = st.text_input(
         "Search for packages:",
-        placeholder="Enter package ID or partial name...",
+        placeholder=f"Enter {PACKAGE_ID.lower()} or partial name...",
         key="package_search",
     )
 
@@ -484,11 +495,11 @@ def show_package_search_and_select(analyzer: AppMetricsAnalyzer, dates: list) ->
     display_df = filtered_df.copy()
     display_df = display_df.rename(
         columns={
-            "package_id": "Package ID",
-            "total_downloads": "Total Downloads",
+            "package_id": PACKAGE_ID,
+            "total_downloads": TOTAL_DOWNLOADS,
             "total_versions": "Versions",
-            "api_hits": "API Hits",
-            "dates_active": "Active Dates",
+            "api_hits": API_HITS,
+            "dates_active": ACTIVE_DATES,
         }
     )
 
@@ -497,13 +508,13 @@ def show_package_search_and_select(analyzer: AppMetricsAnalyzer, dates: list) ->
         display_df,
         use_container_width=True,
         column_config={
-            "Package ID": st.column_config.TextColumn("Package ID"),
-            "Total Downloads": st.column_config.NumberColumn(
-                "Total Downloads", format="%d"
+            "Package ID": st.column_config.TextColumn(PACKAGE_ID),
+            TOTAL_DOWNLOADS: st.column_config.NumberColumn(
+                TOTAL_DOWNLOADS, format="%d"
             ),
             "Versions": st.column_config.NumberColumn("Versions"),
-            "API Hits": st.column_config.NumberColumn("API Hits", format="%d"),
-            "Active Dates": st.column_config.NumberColumn("Active Dates"),
+            "API Hits": st.column_config.NumberColumn(API_HITS, format="%d"),
+            "Active Dates": st.column_config.NumberColumn(ACTIVE_DATES),
         },
     )
 
@@ -513,14 +524,22 @@ def show_package_search_and_select(analyzer: AppMetricsAnalyzer, dates: list) ->
     if not filtered_df.empty:
         # Create a selectbox for package selection
         package_options = filtered_df["package_id"].tolist()
+
+        def format_package_select_option(x: str) -> str:
+            if x == "":
+                return "Select a package..."
+            elif x in package_options:
+                downloads = filtered_df[filtered_df["package_id"] == x][
+                    "total_downloads"
+                ].iloc[0]
+                return f"{x} ({downloads:,} downloads)"
+            else:
+                return x
+
         selected_package = st.selectbox(
             "Choose a package to view details:",
             options=[""] + package_options,
-            format_func=lambda x: "Select a package..."
-            if x == ""
-            else f"{x} ({filtered_df[filtered_df['package_id'] == x]['total_downloads'].iloc[0]:,} downloads)"
-            if x in package_options
-            else x,
+            format_func=format_package_select_option,
         )
 
         if selected_package and selected_package != "":

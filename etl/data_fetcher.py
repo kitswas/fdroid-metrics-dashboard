@@ -47,6 +47,10 @@ class DataFetcher:
         self.apps_data_dir = APPS_DATA_DIR
         self.search_data_dir = SEARCH_DATA_DIR
 
+        # Constants
+        self.DATA_TYPE_ERROR_MSG = "data_type must be 'search' or 'apps'"
+        self.JSON_EXT = ".json"
+
     def get_available_remote_dates(self, data_type: str) -> list[str]:
         """
         Get available dates from remote servers.
@@ -65,7 +69,7 @@ class DataFetcher:
         elif data_type == "apps":
             return self._get_apps_remote_dates()
         else:
-            raise ValueError("data_type must be 'search' or 'apps'")
+            raise ValueError(self.DATA_TYPE_ERROR_MSG)
 
     def _get_search_remote_dates(self) -> list[str]:
         """
@@ -89,7 +93,7 @@ class DataFetcher:
                 if filename == "last_submitted_to_cimp.json":
                     continue
                 try:
-                    date_str = filename.replace(".json", "")
+                    date_str = filename.replace(self.JSON_EXT, "")
                     datetime.strptime(date_str, "%Y-%m-%d")  # Validate format
                     dates.append(date_str)
                 except ValueError:
@@ -122,7 +126,7 @@ class DataFetcher:
 
                 for filename in index:
                     try:
-                        date_str = filename.replace(".json", "")
+                        date_str = filename.replace(self.JSON_EXT, "")
                         datetime.strptime(date_str, "%Y-%m-%d")  # Validate format
                         dates.append(date_str)
                     except ValueError:
@@ -155,7 +159,7 @@ class DataFetcher:
                 available: set[str] = set()
                 for filename in index:
                     try:
-                        date_str = filename.replace(".json", "")
+                        date_str = filename.replace(self.JSON_EXT, "")
                         datetime.strptime(date_str, "%Y-%m-%d")
                         available.add(date_str)
                     except ValueError:
@@ -196,9 +200,9 @@ class DataFetcher:
                             dates.add(date_str)
                         except ValueError:
                             continue
-            return sorted(list(dates))
+            return sorted(dates)
         else:
-            raise ValueError("data_type must be 'search' or 'apps'")
+            raise ValueError(self.DATA_TYPE_ERROR_MSG)
 
         # For search data
         dates_list: list[str] = []
@@ -271,7 +275,7 @@ class DataFetcher:
                 dates_to_fetch, server_dates, progress_callback, status_callback
             )
         else:
-            raise ValueError("data_type must be 'search' or 'apps'")
+            raise ValueError(self.DATA_TYPE_ERROR_MSG)
 
     def _fetch_search_dates(
         self,
@@ -309,7 +313,7 @@ class DataFetcher:
 
                 results["successful"] += 1
 
-            except (requests.RequestException, json.JSONDecodeError, OSError) as e:
+            except (requests.RequestException, json.JSONDecodeError) as e:
                 error_msg = f"Failed to download {date}: {str(e)}"
                 results["errors"].append(error_msg)
                 results["failed"] += 1
@@ -384,7 +388,6 @@ class DataFetcher:
                     except (
                         requests.RequestException,
                         json.JSONDecodeError,
-                        OSError,
                     ) as e:
                         error_msg = f"Failed to download {server}/{date}: {str(e)}"
                         results["errors"].append(error_msg)

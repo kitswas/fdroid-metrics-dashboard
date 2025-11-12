@@ -186,7 +186,7 @@ class SearchMetricsAnalyzer:
             .agg(
                 total_hits=("hits", "sum"),
                 appearances=("date", "count"),  # Count of dates with hits
-                dates=("date", lambda x: sorted(list(x.unique()))),
+                dates=("date", lambda x: sorted(x.unique())),
             )
             .reset_index()
         )

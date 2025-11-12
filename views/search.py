@@ -11,6 +11,10 @@ from plotly.subplots import make_subplots
 from etl.analyzer_search import SearchMetricsAnalyzer
 from etl.data_fetcher_ui import show_data_fetcher, show_quick_fetch_buttons
 
+# UI Constants
+TOTAL_HITS = "Total Hits"
+TOTAL_ASCENDING = "total ascending"
+
 
 @st.cache_resource
 def get_search_analyzer() -> SearchMetricsAnalyzer:
@@ -149,7 +153,7 @@ def show_search_overview(analyzer: SearchMetricsAnalyzer, dates: list) -> None:
 
         col1, col2, col3, col4 = st.columns(4)
         with col1:
-            st.metric("Total Hits", f"{summary['total_hits']:,}")
+            st.metric(TOTAL_HITS, f"{summary['total_hits']:,}")
         with col2:
             st.metric("Unique Queries", f"{summary['unique_queries']:,}")
         with col3:
@@ -172,9 +176,7 @@ def show_search_overview(analyzer: SearchMetricsAnalyzer, dates: list) -> None:
                     summary["top_queries"], columns=["Query", "Hits"]
                 )
                 fig = px.bar(queries_df.head(10), x="Hits", y="Query", orientation="h")
-                fig.update_layout(
-                    height=400, yaxis={"categoryorder": "total ascending"}
-                )
+                fig.update_layout(height=400, yaxis={"categoryorder": TOTAL_ASCENDING})
                 st.plotly_chart(fig, use_container_width=True)
 
         with col2:
@@ -195,7 +197,7 @@ def show_search_overview(analyzer: SearchMetricsAnalyzer, dates: list) -> None:
             # Summary metrics
             col1, col2, col3, col4 = st.columns(4)
             with col1:
-                st.metric("Total Hits", f"{ts_data['total_hits'].sum():,}")
+                st.metric(TOTAL_HITS, f"{ts_data['total_hits'].sum():,}")
             with col2:
                 st.metric("Avg Weekly Hits", f"{ts_data['total_hits'].mean():.0f}")
             with col3:
@@ -215,9 +217,7 @@ def show_search_overview(analyzer: SearchMetricsAnalyzer, dates: list) -> None:
             )
 
             fig.add_trace(
-                go.Scatter(
-                    x=ts_data["date"], y=ts_data["total_hits"], name="Total Hits"
-                ),
+                go.Scatter(x=ts_data["date"], y=ts_data["total_hits"], name=TOTAL_HITS),
                 row=1,
                 col=1,
             )
@@ -285,9 +285,9 @@ def show_query_analysis(analyzer: SearchMetricsAnalyzer, dates: list) -> None:
             x="total_hits",
             y="query",
             title=f"Top {min(20, len(filtered_df))} Search Queries",
-            labels={"total_hits": "Total Hits", "query": "Search Query"},
+            labels={"total_hits": TOTAL_HITS, "query": "Search Query"},
         )
-        fig.update_layout(height=600, yaxis={"categoryorder": "total ascending"})
+        fig.update_layout(height=600, yaxis={"categoryorder": TOTAL_ASCENDING})
         st.plotly_chart(fig, use_container_width=True)
 
         # Query statistics table
@@ -302,7 +302,7 @@ def show_query_analysis(analyzer: SearchMetricsAnalyzer, dates: list) -> None:
             column_config={
                 "appearances": st.column_config.NumberColumn("Weeks Active"),
                 "avg_hits": st.column_config.NumberColumn("Avg Hits/Week"),
-                "total_hits": st.column_config.NumberColumn("Total Hits"),
+                "total_hits": st.column_config.NumberColumn(TOTAL_HITS),
             },
         )
 
@@ -349,9 +349,9 @@ def show_search_geographic_analysis(
             x="total_hits",
             y="country",
             title="Top 20 Countries by Search Hits",
-            labels={"total_hits": "Total Hits", "country": "Country"},
+            labels={"total_hits": TOTAL_HITS, "country": "Country"},
         )
-        fig.update_layout(height=600, yaxis={"categoryorder": "total ascending"})
+        fig.update_layout(height=600, yaxis={"categoryorder": TOTAL_ASCENDING})
         st.plotly_chart(fig, use_container_width=True)
 
         # Geographic distribution table
@@ -404,16 +404,16 @@ def show_search_technical_analysis(
         st.subheader("Search HTTP Error Analysis")
 
         errors_df = pd.DataFrame(
-            list(all_errors.items()), columns=["Error Code", "Total Hits"]
+            list(all_errors.items()), columns=["Error Code", TOTAL_HITS]
         )
-        errors_df = errors_df.sort_values("Total Hits", ascending=False)
+        errors_df = errors_df.sort_values(TOTAL_HITS, ascending=False)
 
         col1, col2 = st.columns(2)
 
         with col1:
             fig = px.pie(
                 errors_df,
-                values="Total Hits",
+                values=TOTAL_HITS,
                 names="Error Code",
                 title="Search Error Distribution",
             )
@@ -426,15 +426,15 @@ def show_search_technical_analysis(
     if all_paths:
         st.subheader("Top Search Request Paths")
 
-        paths_df = pd.DataFrame(list(all_paths.items()), columns=["Path", "Total Hits"])
-        paths_df = paths_df.sort_values("Total Hits", ascending=False).head(20)
+        paths_df = pd.DataFrame(list(all_paths.items()), columns=["Path", TOTAL_HITS])
+        paths_df = paths_df.sort_values(TOTAL_HITS, ascending=False).head(20)
 
         fig = px.bar(
             paths_df,
-            x="Total Hits",
+            x=TOTAL_HITS,
             y="Path",
             title="Top 20 Search Request Paths",
-            labels={"Total Hits": "Total Hits", "Path": "Request Path"},
+            labels={TOTAL_HITS: TOTAL_HITS, "Path": "Request Path"},
         )
-        fig.update_layout(height=500, yaxis={"categoryorder": "total ascending"})
+        fig.update_layout(height=500, yaxis={"categoryorder": TOTAL_ASCENDING})
         st.plotly_chart(fig, use_container_width=True)
