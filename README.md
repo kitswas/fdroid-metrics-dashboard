@@ -4,8 +4,7 @@ A comprehensive dashboard for analyzing F-Droid app store metrics, including sea
 
 > [!NOTE]
 > The calculations are a bit iffy. _(My calculations always are :P)_  
-> The data fetcher needs a bit of work too on the user-friendliness side.  
-> And I am unsure whether the data labels mean what I think they mean. (Is hit == download ?).  
+> And I am unsure whether the data labels mean what I think they mean.  
 > Enjoy it while it works! I probably won’t maintain it long-term.  
 
 ## Key Features
@@ -60,6 +59,8 @@ uv venv
 source .venv/bin/activate # Linux/MacOS
 uv sync --link-mode=symlink # Install the dependencies, use -U to update
 ```
+
+Or use the Dockerfile.
 
 ## Data Fetching
 
