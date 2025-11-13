@@ -47,30 +47,9 @@ def show_search_page() -> None:
     available_dates = analyzer.get_available_dates()
     if not available_dates:
         st.warning("No search data files found locally.")
-
-        # Show data fetching interface
-        st.info("💡 **Fetch data directly from F-Droid servers:**")
-
-        # Create tabs for fetching and analysis
-        tab_fetch, tab_analysis = st.tabs(["📥 Fetch Data", "📊 Analysis"])
-
-        with tab_fetch:
-            # Show quick fetch buttons first for better UX
-            data_fetched = show_quick_fetch_buttons("search", "search_")
-
-            # Show detailed data fetching interface if quick fetch wasn't used
-            if not data_fetched:
-                data_fetched = show_data_fetcher("search", "search_")
-
-            if data_fetched:
-                st.success(
-                    "✅ Data fetched successfully! Switch to the Analysis tab or refresh the page."
-                )
-                if st.button("🔄 Refresh Page", key="search_refresh"):
-                    st.rerun()
-
-        with tab_analysis:
-            st.info("Please fetch data first using the 'Fetch Data' tab.")
+        st.info("💡 Please fetch data first.")
+        if st.button("🔽 Fetch Data", key="search_fetch"):
+            st.session_state.show_search_fetch = True
 
         return
 
@@ -106,24 +85,6 @@ def show_search_page() -> None:
     st.sidebar.subheader("📥 Fetch More Data")
     if st.sidebar.button("🔽 Fetch Additional Data", key="search_sidebar_fetch"):
         st.session_state.show_search_fetch = True
-
-    # Show data fetching interface if requested
-    if st.session_state.get("show_search_fetch", False):
-        with st.expander("📥 Fetch Additional Search Data", expanded=True):
-            # Show quick fetch buttons first for better UX
-            data_fetched = show_quick_fetch_buttons("search", "search_sidebar_")
-
-            # Show detailed data fetching interface if quick fetch wasn't used
-            if not data_fetched:
-                data_fetched = show_data_fetcher("search", "search_sidebar_")
-
-            if data_fetched:
-                st.success(
-                    "✅ Data fetched successfully! Refresh the page to see new data."
-                )
-                if st.button("🔄 Refresh Page", key="search_sidebar_refresh"):
-                    st.session_state.show_search_fetch = False
-                    st.rerun()
 
     # Main content tabs
     tab1, tab2, tab3, tab4 = st.tabs(
