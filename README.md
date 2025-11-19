@@ -60,7 +60,7 @@ source .venv/bin/activate # Linux/MacOS
 uv sync --link-mode=symlink # Install the dependencies, use -U to update
 ```
 
-Or use the Dockerfile.
+Or use the Dockerfile. _(Min 2GB RAM, 2 CPU Cores) (4 CPU Cores recommended)_
 
 ## Data Fetching
 
