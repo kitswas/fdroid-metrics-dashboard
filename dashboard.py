@@ -63,7 +63,9 @@ def main() -> None:
         - **Search Patterns**: Understanding what users search for most frequently
         - **App Downloads**: Tracking download trends and popular applications  
         - **Usage Statistics**: Detailed analytics for individual packages
-        
+
+        This app is open source! You can find the source code on [GitHub](https://github.com/kitswas/fdroid-metrics-dashboard).
+
         ### Data Sources
         - **Search**: search.f-droid.org
         - **Apps**: http01/02/03.fdroid.net, originserver.f-droid.org
