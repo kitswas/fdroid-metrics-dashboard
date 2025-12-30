@@ -441,9 +441,11 @@ class AppMetricsAnalyzer:
                     # Filter for package API paths
                     if path.startswith(self.API_PACKAGES_PREFIX):
                         # Extract package name from path
-                        package_name = path.replace(
-                            self.API_PACKAGES_PREFIX, ""
-                        ).strip()
+                        package_name = (
+                            path.replace(self.API_PACKAGES_PREFIX, "")
+                            .strip()
+                            .strip("/")
+                        )
 
                         # Skip empty or invalid package names
                         if not package_name or "/" in package_name:
@@ -551,8 +553,10 @@ class AppMetricsAnalyzer:
                     # Check for APK downloads: /repo/{package_id}_{version}.apk
                     if path.startswith(self.REPO_PREFIX) and path.endswith(".apk"):
                         # Extract package name and version from path
-                        filename = path.replace(self.REPO_PREFIX, "").replace(
-                            ".apk", ""
+                        filename = (
+                            path.replace(self.REPO_PREFIX, "")
+                            .replace(".apk", "")
+                            .strip("/")
                         )
 
                         # Handle potential query parameters (e.g., &pxdate=2025-08-05)
@@ -645,8 +649,10 @@ class AppMetricsAnalyzer:
                         and path.endswith(".apk")
                         and hits > 0
                     ):
-                        filename = path.replace(self.REPO_PREFIX, "").replace(
-                            ".apk", ""
+                        filename = (
+                            path.replace(self.REPO_PREFIX, "")
+                            .replace(".apk", "")
+                            .strip("/")
                         )
 
                         # Handle potential query parameters
