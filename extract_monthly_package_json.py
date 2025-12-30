@@ -1,11 +1,12 @@
 """
 Script to extract per-package monthly metrics from F-Droid app and search data.
-Output: processed/monthly/{package_id}.json
+Output: ./processed/monthly/{package_id}.json
 """
 
 import json
 import logging
 import os
+import pathlib
 from datetime import datetime
 
 from etl.analyzer_apps import AppMetricsAnalyzer
@@ -13,7 +14,7 @@ from etl.analyzer_search import SearchMetricsAnalyzer
 from etl.data_fetcher import DataFetcher
 
 # --- CONFIG ---
-OUTPUT_DIR = "processed/monthly"
+OUTPUT_DIR = pathlib.Path(__file__).parent / "processed" / "monthly"
 MONTHLY_SNAPSHOT_COUNT = 4  # Number of snapshots to use for monthly stats
 
 logger = logging.getLogger(__name__)
@@ -157,6 +158,7 @@ def main() -> None:
     all_package_ids = set(app_stats.keys())
     logger.info(f"Writing output for {len(all_package_ids)} packages to {OUTPUT_DIR}")
     for package_id in all_package_ids:
+        package_id = package_id.strip("/")  # Sanitize package ID
         app = app_stats.get(package_id, {})
         search_count = query_hits.get(package_id, 0)
         out = {
@@ -166,10 +168,11 @@ def main() -> None:
             "versions": app.get("total_versions", 0),
             "search_count": search_count,
         }
-        out_path = os.path.join(OUTPUT_DIR, f"{package_id}.json")
+        out_path = OUTPUT_DIR / f"{package_id}.json"
+        out_path = out_path.resolve()
         with open(out_path, "w", encoding="utf-8") as f:
             json.dump(out, f, ensure_ascii=False, indent=2)
-        logger.debug(f"Wrote {out_path}")
+        logger.debug(f"Wrote data for package {package_id} to {out_path}")
 
 
 if __name__ == "__main__":
