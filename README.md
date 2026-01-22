@@ -2,21 +2,21 @@
 
 A comprehensive dashboard for analyzing F-Droid app store metrics, including search patterns and app download statistics.
 
-> [!NOTE]
+> [!NOTE]  
 > The calculations are a bit iffy. _(My calculations always are :P)_  
 > And I am unsure whether the data labels mean what I think they mean.  
-> Enjoy it while it works! I probably won’t maintain it long-term.  
+> Enjoy it while it works! ~~I probably won’t maintain it long-term.~~ Still maintaining it as of Jan 2026. No idea why.
 
 ## Key Features
 
-### 🔍 Search Metrics
+### Search Metrics
 
 - Search query analysis and trends
 - Geographic distribution of searches
 - Error analysis and technical metrics
 - Time series visualization
 
-### 📱 App Metrics
+### App Metrics
 
 - App download patterns from HTTP servers
 - Request path analysis (JAR files, repository diffs, etc.)
@@ -33,6 +33,10 @@ A GitHub Actions cronjob runs daily to recompute these metrics.
 ![Searches last month](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fgithub.com%2Fkitswas%2Ffdroid-metrics-dashboard%2Fraw%2Frefs%2Fheads%2Fmain%2Fprocessed%2Fmonthly%2Fio.github.kitswas.virtualgamepadmobile.json&query=%24.search_count&logo=fdroid&label=Searches%20last%20month)
 ```
 
+This is how those look ([customizable](https://shields.io/badges/dynamic-json-badge)):
+![Downloads last month](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fgithub.com%2Fkitswas%2Ffdroid-metrics-dashboard%2Fraw%2Frefs%2Fheads%2Fmain%2Fprocessed%2Fmonthly%2Fio.github.kitswas.virtualgamepadmobile.json&query=%24.total_downloads&logo=fdroid&label=Downloads%20last%20month)
+![Searches last month](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fgithub.com%2Fkitswas%2Ffdroid-metrics-dashboard%2Fraw%2Frefs%2Fheads%2Fmain%2Fprocessed%2Fmonthly%2Fio.github.kitswas.virtualgamepadmobile.json&query=%24.search_count&logo=fdroid&label=Searches%20last%20month)
+
 Replace `io.github.kitswas.virtualgamepadmobile` with your package ID.
 
 You can find the processed data files in the `processed` directory. (Search for your package ID)
@@ -43,10 +47,10 @@ You can find the processed data files in the `processed` directory. (Search for 
 
 ## Local Setup Instructions
 
-You need the UV package/project manager to install the dependencies.  
-You can get [UV here](https://docs.astral.sh/uv/getting-started/installation/).
+You need the uv package/project manager to install the dependencies.  
+You can get [uv here](https://docs.astral.sh/uv/getting-started/installation/).
 
-> [!TIP]
+> [!TIP]  
 > To change the Python version, change the `requires-python` field in [pyproject.toml](pyproject.toml)
 > and the number in [.python-version](.python-version).  
 > uv will take care of the rest.
@@ -62,11 +66,21 @@ uv sync --link-mode=symlink # Install the dependencies, use -U to update
 
 Or use the Dockerfile. _(Min 2GB RAM, 2 CPU Cores) (4 CPU Cores recommended)_
 
-## Data Fetching
+### Dashboard
+
+Launch the interactive multipage dashboard:
+
+```bash
+uv run streamlit run dashboard.py
+```
+
+The dashboard will be available at <http://localhost:8501>.
+
+### Manual Data Fetching
 
 The data fetchers have been revamped to support flexible date range queries. Each data file represents cumulative metrics since the previous date (usually weekly snapshots).
 
-### Search Metrics Data
+#### Search Metrics Data
 
 Download F-Droid search metrics data:
 
@@ -84,7 +98,7 @@ uv run python -m etl.getdata_search 2024 12
 uv run python -m etl.getdata_search --help
 ```
 
-### App Metrics Data
+#### App Metrics Data
 
 Download F-Droid app metrics data from HTTP servers:
 
@@ -108,16 +122,6 @@ uv run python -m etl.getdata_apps --help
 2. Filter available dates that fall within your specified range
 3. Download only the matching date files (e.g., `2025-09-29.json`)
 4. Skip files that already exist locally
-
-## Dashboard
-
-Launch the interactive multipage dashboard:
-
-```bash
-uv run streamlit run dashboard.py
-```
-
-The dashboard will be available at <http://localhost:8501>.
 
 ## Code Formatting and Linting
 
