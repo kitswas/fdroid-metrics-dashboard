@@ -133,7 +133,7 @@ def show_search_overview(analyzer: SearchMetricsAnalyzer, dates: list) -> None:
                 )
                 fig = px.bar(queries_df.head(10), x="Hits", y="Query", orientation="h")
                 fig.update_layout(height=400, yaxis={"categoryorder": TOTAL_ASCENDING})
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
 
         with col2:
             st.subheader("Top Countries")
@@ -143,7 +143,7 @@ def show_search_overview(analyzer: SearchMetricsAnalyzer, dates: list) -> None:
                 )
                 fig = px.pie(countries_df.head(10), values="Hits", names="Country")
                 fig.update_layout(height=400)
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
 
     else:
         # Multi-day time series
@@ -189,7 +189,7 @@ def show_search_overview(analyzer: SearchMetricsAnalyzer, dates: list) -> None:
             )
 
             fig.update_layout(height=600, showlegend=False)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
 
 def show_query_analysis(analyzer: SearchMetricsAnalyzer, dates: list) -> None:
@@ -244,7 +244,7 @@ def show_query_analysis(analyzer: SearchMetricsAnalyzer, dates: list) -> None:
             labels={"total_hits": TOTAL_HITS, "query": "Search Query"},
         )
         fig.update_layout(height=600, yaxis={"categoryorder": TOTAL_ASCENDING})
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
         # Query statistics table
         st.subheader("Query Statistics")
@@ -254,7 +254,7 @@ def show_query_analysis(analyzer: SearchMetricsAnalyzer, dates: list) -> None:
         display_df["avg_hits"] = display_df["avg_hits"].round(1)
         st.dataframe(
             display_df,
-            use_container_width=True,
+            width="stretch",
             column_config={
                 "appearances": st.column_config.NumberColumn("Weeks Active"),
                 "avg_hits": st.column_config.NumberColumn("Avg Hits/Week"),
@@ -308,7 +308,7 @@ def show_search_geographic_analysis(
             labels={"total_hits": TOTAL_HITS, "country": "Country"},
         )
         fig.update_layout(height=600, yaxis={"categoryorder": TOTAL_ASCENDING})
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
         # Geographic distribution table
         st.subheader("Country Statistics")
@@ -316,7 +316,7 @@ def show_search_geographic_analysis(
             ["country", "total_hits", "avg_hits"]
         ].copy()
         display_df["avg_hits"] = display_df["avg_hits"].round(1)
-        st.dataframe(display_df, use_container_width=True)
+        st.dataframe(display_df, width="stretch")
 
 
 def show_search_technical_analysis(
@@ -373,10 +373,10 @@ def show_search_technical_analysis(
                 names="Error Code",
                 title="Search Error Distribution",
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
         with col2:
-            st.dataframe(errors_df, use_container_width=True)
+            st.dataframe(errors_df, width="stretch")
 
     # Path analysis
     if all_paths:
@@ -393,4 +393,4 @@ def show_search_technical_analysis(
             labels={TOTAL_HITS: TOTAL_HITS, "Path": "Request Path"},
         )
         fig.update_layout(height=500, yaxis={"categoryorder": TOTAL_ASCENDING})
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")

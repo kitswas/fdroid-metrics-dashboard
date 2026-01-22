@@ -147,7 +147,7 @@ def show_package_details_page(
                 labels={"downloads": "Downloads", "version": "Version Code"},
             )
             fig.update_layout(height=600, yaxis={"categoryorder": "total ascending"})
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
         with col2:
             # Pie chart for top versions
@@ -167,13 +167,13 @@ def show_package_details_page(
                 names="version",
                 title="Download Distribution by Version",
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
         # Version downloads table
         st.subheader("📋 Version Download Statistics")
         st.dataframe(
             version_df,
-            use_container_width=True,
+            width="stretch",
             column_config={
                 "version": st.column_config.TextColumn("Version Code"),
                 "downloads": st.column_config.NumberColumn("Downloads", format="%d"),
@@ -206,7 +206,7 @@ def show_package_details_page(
                 labels={"downloads": "Downloads", "country": "Country"},
             )
             fig.update_layout(height=500, yaxis={"categoryorder": "total ascending"})
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
         with col2:
             # Country distribution pie chart
@@ -226,13 +226,13 @@ def show_package_details_page(
                 names="country",
                 title="Download Distribution by Country",
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
         # Countries table
         st.subheader("📋 Country Download Statistics")
         st.dataframe(
             countries_df,
-            use_container_width=True,
+            width="stretch",
             column_config={
                 "country": st.column_config.TextColumn("Country"),
                 "downloads": st.column_config.NumberColumn("Downloads", format="%d"),
@@ -329,7 +329,7 @@ def show_package_details_page(
                 fig_downloads.update_layout(
                     xaxis_tickangle=-45, height=400, showlegend=False
                 )
-                st.plotly_chart(fig_downloads, use_container_width=True)
+                st.plotly_chart(fig_downloads, width="stretch")
 
             with col2:
                 # API hits by period
@@ -346,7 +346,7 @@ def show_package_details_page(
                     color_continuous_scale="Oranges",
                 )
                 fig_api.update_layout(xaxis_tickangle=-45, height=400, showlegend=False)
-                st.plotly_chart(fig_api, use_container_width=True)
+                st.plotly_chart(fig_api, width="stretch")
 
             # Cumulative progression chart
             st.subheader("📈 Cumulative Growth")
@@ -391,7 +391,7 @@ def show_package_details_page(
             fig_cumulative.update_yaxes(title_text=CUMULATIVE_DOWNLOADS, row=1, col=1)
             fig_cumulative.update_yaxes(title_text=CUMULATIVE_API_HITS, row=2, col=1)
 
-            st.plotly_chart(fig_cumulative, use_container_width=True)
+            st.plotly_chart(fig_cumulative, width="stretch")
 
             # Period data table
             st.subheader("📊 Period-by-Period Breakdown")
@@ -417,7 +417,7 @@ def show_package_details_page(
 
             st.dataframe(
                 display_period_df,
-                use_container_width=True,
+                width="stretch",
                 column_config={
                     MEASUREMENT_PERIOD: st.column_config.TextColumn("Period"),
                     DOWNLOADS_IN_PERIOD: st.column_config.NumberColumn(
@@ -506,7 +506,7 @@ def show_package_search_and_select(analyzer: AppMetricsAnalyzer, dates: list) ->
     # Show the table
     st.dataframe(
         display_df,
-        use_container_width=True,
+        width="stretch",
         column_config={
             "Package ID": st.column_config.TextColumn(PACKAGE_ID),
             TOTAL_DOWNLOADS: st.column_config.NumberColumn(
