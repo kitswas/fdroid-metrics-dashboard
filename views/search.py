@@ -53,31 +53,27 @@ def show_search_page() -> None:
         return
 
     st.sidebar.subheader("Date Range")
-    if len(available_dates) > 1:
-        start_date = st.sidebar.date_input(
-            "Start Date",
-            value=pd.to_datetime(available_dates[0]).date(),
-            min_value=pd.to_datetime(available_dates[0]).date(),
-            max_value=pd.to_datetime(available_dates[-1]).date(),
-            key="search_start_date",
-        )
-        end_date = st.sidebar.date_input(
-            "End Date",
-            value=pd.to_datetime(available_dates[-1]).date(),
-            min_value=pd.to_datetime(available_dates[0]).date(),
-            max_value=pd.to_datetime(available_dates[-1]).date(),
-            key="search_end_date",
-        )
+    start_date = st.sidebar.date_input(
+        "Start Date",
+        value=pd.to_datetime(available_dates[0]).date(),
+        min_value=pd.to_datetime(available_dates[0]).date(),
+        max_value=pd.to_datetime(available_dates[-1]).date(),
+        key="search_start_date",
+    )
+    end_date = st.sidebar.date_input(
+        "End Date",
+        value=pd.to_datetime(available_dates[-1]).date(),
+        min_value=pd.to_datetime(available_dates[0]).date(),
+        max_value=pd.to_datetime(available_dates[-1]).date(),
+        key="search_end_date",
+    )
 
-        # Filter dates
-        selected_dates = [
-            date
-            for date in available_dates
-            if start_date <= pd.to_datetime(date).date() <= end_date
-        ]
-    else:
-        selected_dates = available_dates
-        st.sidebar.info(f"Only one date available: {available_dates[0]}")
+    # Filter dates
+    selected_dates = [
+        date
+        for date in available_dates
+        if start_date <= pd.to_datetime(date).date() <= end_date
+    ]
 
     # Add data fetching option in sidebar
     st.sidebar.markdown("---")

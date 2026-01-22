@@ -48,31 +48,27 @@ if package_id:
 
     # Date selection for package details
     st.sidebar.subheader("Date Range")
-    if len(available_dates) > 1:
-        start_date = st.sidebar.date_input(
-            "Start Date",
-            value=pd.to_datetime(available_dates[0]).date(),
-            min_value=pd.to_datetime(available_dates[0]).date(),
-            max_value=pd.to_datetime(available_dates[-1]).date(),
-            key="package_start_date",
-        )
-        end_date = st.sidebar.date_input(
-            "End Date",
-            value=pd.to_datetime(available_dates[-1]).date(),
-            min_value=pd.to_datetime(available_dates[0]).date(),
-            max_value=pd.to_datetime(available_dates[-1]).date(),
-            key="package_end_date",
-        )
+    start_date = st.sidebar.date_input(
+        "Start Date",
+        value=pd.to_datetime(available_dates[0]).date(),
+        min_value=pd.to_datetime(available_dates[0]).date(),
+        max_value=pd.to_datetime(available_dates[-1]).date(),
+        key="package_start_date",
+    )
+    end_date = st.sidebar.date_input(
+        "End Date",
+        value=pd.to_datetime(available_dates[-1]).date(),
+        min_value=pd.to_datetime(available_dates[0]).date(),
+        max_value=pd.to_datetime(available_dates[-1]).date(),
+        key="package_end_date",
+    )
 
-        # Filter dates
-        selected_dates = [
-            date
-            for date in available_dates
-            if start_date <= pd.to_datetime(date).date() <= end_date
-        ]
-    else:
-        selected_dates = available_dates
-        st.sidebar.info(f"Only one date available: {available_dates[0]}")
+    # Filter dates
+    selected_dates = [
+        date
+        for date in available_dates
+        if start_date <= pd.to_datetime(date).date() <= end_date
+    ]
 
     show_package_details_page(package_id, analyzer, selected_dates)
 
@@ -96,31 +92,27 @@ else:
             st.switch_page("pages/app_metrics.py")
     else:
         st.sidebar.subheader("Date Range")
-        if len(available_dates) > 1:
-            start_date = st.sidebar.date_input(
-                "Start Date",
-                value=pd.to_datetime(available_dates[0]).date(),
-                min_value=pd.to_datetime(available_dates[0]).date(),
-                max_value=pd.to_datetime(available_dates[-1]).date(),
-                key="browser_start_date",
-            )
-            end_date = st.sidebar.date_input(
-                "End Date",
-                value=pd.to_datetime(available_dates[-1]).date(),
-                min_value=pd.to_datetime(available_dates[0]).date(),
-                max_value=pd.to_datetime(available_dates[-1]).date(),
-                key="browser_end_date",
-            )
+        start_date = st.sidebar.date_input(
+            "Start Date",
+            value=pd.to_datetime(available_dates[0]).date(),
+            min_value=pd.to_datetime(available_dates[0]).date(),
+            max_value=pd.to_datetime(available_dates[-1]).date(),
+            key="browser_start_date",
+        )
+        end_date = st.sidebar.date_input(
+            "End Date",
+            value=pd.to_datetime(available_dates[-1]).date(),
+            min_value=pd.to_datetime(available_dates[0]).date(),
+            max_value=pd.to_datetime(available_dates[-1]).date(),
+            key="browser_end_date",
+        )
 
-            # Filter dates
-            selected_dates = [
-                date
-                for date in available_dates
-                if start_date <= pd.to_datetime(date).date() <= end_date
-            ]
-        else:
-            selected_dates = available_dates
-            st.sidebar.info(f"Only one date available: {available_dates[0]}")
+        # Filter dates
+        selected_dates = [
+            date
+            for date in available_dates
+            if start_date <= pd.to_datetime(date).date() <= end_date
+        ]
 
         # Show package search and selection interface
         show_package_search_and_select(analyzer, selected_dates)
