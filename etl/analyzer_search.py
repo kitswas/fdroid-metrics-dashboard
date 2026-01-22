@@ -11,6 +11,7 @@ import pandas as pd
 
 from etl.config import cache_config
 from etl.getdata_search import SUB_DATA_DIR as DATA_DIR
+from etl.security import safe_open
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +74,7 @@ class SearchMetricsAnalyzer:
         if not file_path.exists():
             raise FileNotFoundError(f"No data found for date {date}")
 
-        with open(file_path, encoding="utf-8") as f:
+        with safe_open(file_path, encoding="utf-8") as f:
             data = json.load(f)
 
         # Simple cache size management - remove oldest entries if cache is too large

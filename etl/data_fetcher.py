@@ -31,6 +31,7 @@ from etl.getdata_search import (
 from etl.getdata_search import (
     SUB_DATA_DIR as SEARCH_DATA_DIR,
 )
+from etl.security import safe_open
 
 logger = logging.getLogger(__name__)
 
@@ -308,7 +309,7 @@ class DataFetcher:
                 response = requests.get(url, timeout=fetcher_config.REQUEST_TIMEOUT)
                 response.raise_for_status()
 
-                with open(filepath, "w", encoding="utf-8") as f:
+                with safe_open(filepath, "w", encoding="utf-8") as f:
                     json.dump(response.json(), f, indent=2)
 
                 results["successful"] += 1
@@ -382,7 +383,7 @@ class DataFetcher:
                             url, timeout=fetcher_config.REQUEST_TIMEOUT
                         )
                         response.raise_for_status()
-                        with open(filepath, "w", encoding="utf-8") as f:
+                        with safe_open(filepath, "w", encoding="utf-8") as f:
                             json.dump(response.json(), f, indent=2)
                         results["successful"] += 1
                     except (

@@ -9,7 +9,6 @@ import streamlit as st
 from plotly.subplots import make_subplots
 
 from etl.analyzer_search import SearchMetricsAnalyzer
-from etl.data_fetcher_ui import show_data_fetcher, show_quick_fetch_buttons
 
 # UI Constants
 TOTAL_HITS = "Total Hits"

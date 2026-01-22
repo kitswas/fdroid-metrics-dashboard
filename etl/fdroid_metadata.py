@@ -13,6 +13,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from etl.config import fetcher_config, metadata_config
+from etl.security import safe_open
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +98,7 @@ class FDroidMetadataFetcher:
 
                 # Cache the result
                 cache_path = self._get_cache_path(package_id)
-                with open(cache_path, "w", encoding="utf-8") as f:
+                with safe_open(cache_path, "w", encoding="utf-8") as f:
                     yaml.dump(metadata, f, default_flow_style=False)
 
                 return metadata
@@ -134,7 +135,7 @@ class FDroidMetadataFetcher:
 
         if cache_path.exists():
             try:
-                with open(cache_path, encoding="utf-8") as f:
+                with safe_open(cache_path, encoding="utf-8") as f:
                     return yaml.safe_load(f)
             except (yaml.YAMLError, OSError) as e:
                 logger.warning(f"Error reading cached metadata for {package_id}: {e}")

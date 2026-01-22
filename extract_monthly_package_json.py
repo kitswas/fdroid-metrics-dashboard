@@ -12,6 +12,7 @@ from datetime import datetime
 from etl.analyzer_apps import AppMetricsAnalyzer
 from etl.analyzer_search import SearchMetricsAnalyzer
 from etl.data_fetcher import DataFetcher
+from etl.security import safe_open
 
 # --- CONFIG ---
 OUTPUT_DIR = pathlib.Path(__file__).parent / "processed" / "monthly"
@@ -170,7 +171,7 @@ def main() -> None:
         }
         out_path = OUTPUT_DIR / f"{package_id}.json"
         out_path = out_path.resolve()
-        with open(out_path, "w", encoding="utf-8") as f:
+        with safe_open(out_path, "w", encoding="utf-8") as f:
             json.dump(out, f, ensure_ascii=False, indent=2)
         logger.debug(f"Wrote data for package {package_id} to {out_path}")
 

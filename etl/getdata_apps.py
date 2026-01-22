@@ -10,6 +10,8 @@ from datetime import datetime, timedelta
 
 import requests as re
 
+from etl.security import safe_open
+
 BASE_URL = "https://fdroid.gitlab.io/metrics"
 SERVERS = [
     "http01.fdroid.net",
@@ -69,7 +71,7 @@ def download_file(server: str, filename: str) -> bool:
         response = re.get(url)
         response.raise_for_status()
 
-        with open(filepath, "w", encoding="utf-8") as f:
+        with safe_open(filepath, "w", encoding="utf-8") as f:
             json.dump(response.json(), f, indent=2)
 
         logger.info(f"✓ {server}/{filename} downloaded successfully")

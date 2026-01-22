@@ -11,7 +11,6 @@ import streamlit as st
 from plotly.subplots import make_subplots
 
 from etl.analyzer_apps import AppMetricsAnalyzer
-from etl.data_fetcher_ui import show_data_fetcher, show_quick_fetch_buttons
 from etl.fdroid_metadata import FDroidMetadataFetcher
 from etl.getdata_apps import SERVERS
 

@@ -10,6 +10,8 @@ from datetime import datetime, timedelta
 
 import requests as re
 
+from etl.security import safe_open
+
 BASE_URL = "https://fdroid.gitlab.io/metrics/search.f-droid.org"
 INDEX_URL = f"{BASE_URL}/index.json"
 RAW_DATA_DIR = pathlib.Path(__file__).parent / "raw"
@@ -67,7 +69,7 @@ def download_file(filename: str) -> bool:
         response = re.get(url)
         response.raise_for_status()
 
-        with open(filepath, "w", encoding="utf-8") as f:
+        with safe_open(filepath, "w", encoding="utf-8") as f:
             json.dump(response.json(), f, indent=2)
 
         logger.info(f"✓ {filename} downloaded successfully")
