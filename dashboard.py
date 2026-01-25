@@ -27,7 +27,7 @@ def main() -> None:
         """
     )
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
 
     with col1:
         st.markdown("### 🔍 Search Metrics")
@@ -52,6 +52,14 @@ def main() -> None:
         )
         if st.button("Go to Package Details", key="package_btn"):
             st.switch_page("pages/package_details.py")
+
+    with col4:
+        st.markdown("### ℹ️ App Badges")
+        st.markdown(
+            "Generate dynamic badges for F-Droid apps to display monthly download and search statistics. Delivered via Shields.io."
+        )
+        if st.button("Go to App Badges", key="badges_btn"):
+            st.switch_page("pages/app_badges.py")
 
     st.markdown("---")
 
