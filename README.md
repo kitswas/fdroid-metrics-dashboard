@@ -9,20 +9,6 @@ A comprehensive dashboard for analyzing F-Droid app store metrics, including sea
 
 ## Key Features
 
-### Search Metrics
-
-- Search query analysis and trends
-- Geographic distribution of searches
-- Error analysis and technical metrics
-- Time series visualization
-
-### App Metrics
-
-- App download patterns from HTTP servers
-- Request path analysis (JAR files, repository diffs, etc.)
-- Server performance comparison
-- Geographic distribution of downloads
-
 ### Badges (via Shields.io)
 
 You can add badges to your README file to display various metrics (monthly) for your package.  
@@ -40,6 +26,20 @@ This is how those look ([customizable](https://shields.io/badges/dynamic-json-ba
 Replace `io.github.kitswas.virtualgamepadmobile` with your package ID.
 
 You can find the processed data files in the `processed` directory. (Search for your package ID)
+
+### Search Metrics
+
+- Search query analysis and trends
+- Geographic distribution of searches
+- Error analysis and technical metrics
+- Time series visualization
+
+### App Metrics
+
+- App download patterns from HTTP servers
+- Request path analysis (JAR files, repository diffs, etc.)
+- Server performance comparison
+- Geographic distribution of downloads
 
 ## Hosted Dashboard (via Streamlit)
 
