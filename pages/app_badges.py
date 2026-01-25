@@ -2,6 +2,7 @@
 App metrics page for F-Droid dashboard
 """
 
+import re
 import streamlit as st
 
 
@@ -33,7 +34,7 @@ def show_badge_builder() -> None:
 
         A [GitHub Actions workflow runs daily](https://github.com/kitswas/fdroid-metrics-dashboard/actions/workflows/extract_monthly_package_json.yml) to process raw F-Droid metrics data and generates appwise JSON files.
 
-        First we aggregate data like this:
+        First we aggregate monthly data like this:
 
         ```
         {
@@ -55,6 +56,16 @@ def show_badge_builder() -> None:
     st.subheader("Generate Your Badges")
 
     app_id = st.text_input("Enter the F-Droid App ID (e.g., org.fdroid.fdroid):")
+
+    # Santitize input, only allow non-empty strings with dots, letters, numbers, underscores, and hyphens
+    app_id = app_id.strip()
+
+    if not re.match(r"^[\w.-]+$", app_id):
+        st.error(
+            "Invalid App ID. Only letters, numbers, dots, underscores, and hyphens are allowed. "
+            "If this is wrong, please [file an issue on GitHub.](https://github.com/kitswas/fdroid-metrics-dashboard/issues/new/choose)"
+        )
+        return
 
     if app_id:
         downloads_badge_url = (
