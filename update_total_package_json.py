@@ -17,7 +17,7 @@ from etl.security import safe_open
 # --- CONFIG ---
 OUTPUT_DIR = pathlib.Path(__file__).parent / "processed" / "total"
 SYNCED_TILL_PATH = OUTPUT_DIR / ".synced-till"
-MAX_SNAPSHOTS_IN_ONCE_RUN = 100
+MAX_SNAPSHOTS_IN_ONE_FETCH = 100
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +60,7 @@ def main() -> None:
         return
     dates_to_fetch = common_remote_dates[
         bisect_right(common_remote_dates, last_synced) :
-    ][:MAX_SNAPSHOTS_IN_ONCE_RUN]
+    ]
     if not dates_to_fetch:
         logger.info("No dates to fetch. Aborting.")
         return
@@ -71,22 +71,24 @@ def main() -> None:
     def log_status(msg: str) -> None:
         logger.info(msg)
 
-    logger.info(f"Fetching app data for dates: {dates_to_fetch}")
-    fetcher.fetch_date_range(
-        "apps",
-        dates_to_fetch[0],
-        dates_to_fetch[-1],
-        progress_callback=log_progress,
-        status_callback=log_status,
-    )
-    logger.info(f"Fetching search data for dates: {dates_to_fetch}")
-    fetcher.fetch_date_range(
-        "search",
-        dates_to_fetch[0],
-        dates_to_fetch[-1],
-        progress_callback=log_progress,
-        status_callback=log_status,
-    )
+    for i in range(0, len(dates_to_fetch), MAX_SNAPSHOTS_IN_ONE_FETCH):
+        dates = dates_to_fetch[i : i + MAX_SNAPSHOTS_IN_ONE_FETCH]
+        logger.info(f"Fetching app data for dates: {dates}")
+        fetcher.fetch_date_range(
+            "apps",
+            dates[0],
+            dates[-1],
+            progress_callback=log_progress,
+            status_callback=log_status,
+        )
+        logger.info(f"Fetching search data for dates: {dates}")
+        fetcher.fetch_date_range(
+            "search",
+            dates[0],
+            dates[-1],
+            progress_callback=log_progress,
+            status_callback=log_status,
+        )
 
     # Find common dates locally
     app_analyzer = AppMetricsAnalyzer()
@@ -94,12 +96,10 @@ def main() -> None:
     app_dates = app_analyzer.get_available_dates()
     search_dates = search_analyzer.get_available_dates()
     common_dates = sorted(set(app_dates) & set(search_dates))
-    if not common_remote_dates:
+    if not common_dates:
         logger.error("No common dates found. Aborting.")
         return
-    dates = common_dates[bisect_right(common_dates, last_synced) :][
-        :MAX_SNAPSHOTS_IN_ONCE_RUN
-    ]
+    dates = common_dates[bisect_right(common_dates, last_synced) :]
     if not dates:
         logger.info("No dates to process. Aborting.")
         return
