@@ -1,4 +1,4 @@
-name: Extract Monthly Package JSON
+name: Extract Package JSON
 
 on:
   schedule:
@@ -26,17 +26,20 @@ jobs:
       - name: Delete old processed files
         run: rm -rf processed/monthly
 
-      - name: Run extraction script
+      - name: Run extract-monthly script
         run: uv run python extract_monthly_package_json.py
+
+      - name: Run update-total script
+        run: uv run python update_total_package_json.py
 
       - name: Commit changes
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add processed/monthly
+          git add processed
           # Only commit and push if there are staged changes
-          if ! git diff --cached --quiet processed/monthly; then
-            git commit -m "Update monthly package stats JSON"
+          if ! git diff --cached --quiet processed; then
+            git commit -m "Update package stats JSON"
             git push
           else
             echo "No changes to commit."
