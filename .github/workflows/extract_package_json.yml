@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  extract:
+  extract-monthly:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -29,17 +29,47 @@ jobs:
       - name: Run extract-monthly script
         run: uv run python extract_monthly_package_json.py
 
-      - name: Run update-total script
-        run: uv run python update_total_package_json.py
-
-      - name: Commit changes
+      - name: Commit monthly changes
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add processed
+          git add processed/monthly
           # Only commit and push if there are staged changes
-          if ! git diff --cached --quiet processed; then
-            git commit -m "Update package stats JSON"
+          if ! git diff --cached --quiet processed/monthly; then
+            git commit -m "Update monthly package stats JSON"
+            git push
+          else
+            echo "No changes to commit."
+          fi
+
+  update-total:
+    runs-on: ubuntu-latest
+    needs: extract-monthly
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install UV
+        run: pip install uv
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run update-total script
+        run: uv run python update_total_package_json.py
+
+      - name: Commit total changes
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add processed/total
+          if ! git diff --cached --quiet processed/total; then
+            git commit -m "Update total package stats JSON"
             git push
           else
             echo "No changes to commit."
