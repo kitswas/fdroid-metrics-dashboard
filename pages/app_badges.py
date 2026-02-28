@@ -34,7 +34,7 @@ def show_badge_builder() -> None:
 
         A [GitHub Actions workflow runs daily](https://github.com/kitswas/fdroid-metrics-dashboard/actions/workflows/extract_monthly_package_json.yml) to process raw F-Droid metrics data and generates appwise JSON files.
 
-        First we aggregate monthly data like this:
+        First we aggregate monthly (and cumulative) data like this:
 
         ```
         {
@@ -46,10 +46,11 @@ def show_badge_builder() -> None:
         }
         ```
 
-        Then, we produce badges like this:
+        Then, we produce badges like these:
 
         ![Downloads last month](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fgithub.com%2Fkitswas%2Ffdroid-metrics-dashboard%2Fraw%2Frefs%2Fheads%2Fmain%2Fprocessed%2Fmonthly%2Fio.github.kitswas.virtualgamepadmobile.json&query=%24.total_downloads&logo=fdroid&label=Downloads%20last%20month)
         ![Searches last month](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fgithub.com%2Fkitswas%2Ffdroid-metrics-dashboard%2Fraw%2Frefs%2Fheads%2Fmain%2Fprocessed%2Fmonthly%2Fio.github.kitswas.virtualgamepadmobile.json&query=%24.search_count&logo=fdroid&label=Searches%20last%20month)
+        ![Downloads (all time)](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fgithub.com%2Fkitswas%2Ffdroid-metrics-dashboard%2Fraw%2Frefs%2Fheads%2Fmain%2Fprocessed%2Ftotal%2Fio.github.kitswas.virtualgamepadmobile.json&query=%24.total_downloads&logo=fdroid&label=Downloads%20(all%20time))
         """
     )
 
@@ -79,8 +80,22 @@ def show_badge_builder() -> None:
             "&query=%24.search_count&logo=fdroid&label=Searches%20last%20month"
         )
 
+        downloads_alltime_badge_url = (
+            "https://img.shields.io/badge/dynamic/json?"
+            f"url=https%3A%2F%2Fgithub.com%2Fkitswas%2Ffdroid-metrics-dashboard%2Fraw%2Frefs%2Fheads%2Fmain%2Fprocessed%2Ftotal%2F{app_id}.json"
+            "&query=%24.total_downloads&logo=fdroid&label=Downloads%20(all%20time)"
+        )
+        searches_alltime_badge_url = (
+            "https://img.shields.io/badge/dynamic/json?"
+            f"url=https%3A%2F%2Fgithub.com%2Fkitswas%2Ffdroid-metrics-dashboard%2Fraw%2Frefs%2Fheads%2Fmain%2Fprocessed%2Ftotal%2F{app_id}.json"
+            "&query=%24.search_count&logo=fdroid&label=Searches%20(all%20time)"
+        )
+
         display_badge(downloads_badge_url, "Downloads last month")
         display_badge(searches_badge_url, "Searches last month")
+
+        display_badge(downloads_alltime_badge_url, "Downloads (all time)")
+        display_badge(searches_alltime_badge_url, "Searches (all time)")
 
 
 show_badge_builder()
