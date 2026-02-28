@@ -3,8 +3,8 @@ App metrics page for F-Droid dashboard
 """
 
 import re
-import streamlit as st
 
+import streamlit as st
 
 st.set_page_config(page_title="F-Droid App Badges", page_icon="ℹ️", layout="wide")
 

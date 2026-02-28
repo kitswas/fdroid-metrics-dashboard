@@ -3,11 +3,11 @@ Script to update per-package total (all-time) metrics from F-Droid app and searc
 Output: ./processed/total/{package_id}.json
 """
 
-from bisect import bisect_right
 import json
 import logging
 import os
 import pathlib
+from bisect import bisect_right
 
 from etl.analyzer_apps import AppMetricsAnalyzer
 from etl.analyzer_search import SearchMetricsAnalyzer
@@ -148,7 +148,7 @@ def main() -> None:
 
     with safe_open(SYNCED_TILL_PATH, "w", encoding="utf-8") as f:
         f.write(dates[-1])
-    logger.info(f"Updated sync date")
+    logger.info("Updated sync date")
 
 
 if __name__ == "__main__":
