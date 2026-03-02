@@ -37,6 +37,7 @@ jobs:
           # Only commit and push if there are staged changes
           if ! git diff --cached --quiet processed/monthly; then
             git commit -m "Update monthly package stats JSON"
+            git pull --rebase
             git push
           else
             echo "No changes to commit."
@@ -44,7 +45,6 @@ jobs:
 
   update-total:
     runs-on: ubuntu-latest
-    needs: extract-monthly
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -70,6 +70,7 @@ jobs:
           git add processed/total
           if ! git diff --cached --quiet processed/total; then
             git commit -m "Update total package stats JSON"
+            git pull --rebase
             git push
           else
             echo "No changes to commit."
