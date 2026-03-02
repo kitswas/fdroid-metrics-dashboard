@@ -12,6 +12,7 @@ from bisect import bisect_right
 from etl.analyzer_apps import AppMetricsAnalyzer
 from etl.analyzer_search import SearchMetricsAnalyzer
 from etl.data_fetcher import DataFetcher
+from etl.query_mapper import QueryMapper
 from etl.security import safe_open
 
 # --- CONFIG ---
@@ -117,13 +118,20 @@ def main() -> None:
     query_hits = {row["query"]: row["total_hits"] for _, row in search_df.iterrows()}
     logger.info(f"Loaded search metrics for {len(query_hits)} queries.")
 
+    # --- Map queries to package IDs ---
+    logger.info("Mapping search queries to package IDs...")
+    mapper = QueryMapper()
+    mapper.build_index(app_stats.keys())
+    package_search_counts = mapper.map_query_hits(query_hits)
+    logger.info(f"Mapped search hits to {len(package_search_counts)} packages.")
+
     # --- Merge and update output ---
     all_package_ids = set(app_stats.keys())
     logger.info(f"Updating output for {len(all_package_ids)} packages in {OUTPUT_DIR}")
     for package_id in all_package_ids:
         package_id = package_id.strip("/")  # Sanitize package ID
         app = app_stats.get(package_id, {})
-        search_count = query_hits.get(package_id, 0)
+        search_count = package_search_counts.get(package_id, 0)
         out = {
             "package_id": package_id,
             "total_downloads": app.get("total_downloads", 0),

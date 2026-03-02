@@ -10,6 +10,7 @@ dependencies = [
     "plotly>=5.0.0",
     "streamlit>=1.28.0",
     "pyyaml>=6.0.0",
+    "rapidfuzz>=3.14.3",
 ]
 
 [dependency-groups]
