@@ -17,6 +17,7 @@ SERVERS = [
     "http01.fdroid.net",
     "http02.fdroid.net",
     "http03.fdroid.net",
+    "http04.fdroid.net",
     "originserver.f-droid.org",
 ]
 RAW_DATA_DIR = pathlib.Path(__file__).parent / "raw"

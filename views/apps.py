@@ -59,7 +59,7 @@ def show_apps_page() -> None:
     """Show the app metrics page."""
     st.title("📱 F-Droid App Metrics")
     st.markdown(
-        "Analyze app download patterns and usage statistics from F-Droid HTTP servers (http01, http02, http03, originserver)."
+        "Analyze app download patterns and usage statistics from F-Droid HTTP servers (http01, http02, http03, http04, originserver)."
     )
 
     # Initialize analyzer

@@ -76,7 +76,7 @@ def main() -> None:
 
         ### Data Sources
         - **Search**: search.f-droid.org
-        - **Apps**: http01/02/03.fdroid.net, originserver.f-droid.org
+        - **Apps**: http01/02/03/04.fdroid.net, originserver.f-droid.org
         """
     )
 
