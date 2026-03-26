@@ -68,7 +68,7 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add processed/total
-          if ! git diff --cached --quiet processed/total; then
+          if ! git diff --cached --quiet processed/total/*.json; then
             git commit -m "Update total package stats JSON"
             git pull --rebase
             git push
