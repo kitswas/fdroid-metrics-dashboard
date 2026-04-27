@@ -14,7 +14,11 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = ["ruff>=0.11.2"]
+dev = [
+    "ruff>=0.11.2",
+    "pytest>=8.0.0",
+    "hypothesis>=6.100.0",
+]
 
 [tool.ruff.lint]
 extend-select = [

@@ -50,7 +50,7 @@ def _is_path_allowed(filepath: pathlib.Path) -> bool:
                 continue
 
         return False
-    except (OSError, RuntimeError) as e:
+    except (OSError, RuntimeError, ValueError) as e:
         logger.warning(f"Error resolving path {filepath}: {e}")
         return False
 
