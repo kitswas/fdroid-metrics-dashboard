@@ -7,18 +7,14 @@ requires-python = ">=3.12"
 dependencies = [
     "requests>=2.33.1",
     "pandas>=3.0.0",
-    "plotly>=5.0.0",
-    "streamlit>=1.56.0",
+    "plotly>=6.7.0",
+    "streamlit==1.56.0", # 1.57.0 has starlette which has ValueErrors on Windows
     "pyyaml>=6.0.0",
     "rapidfuzz>=3.14.3",
 ]
 
 [dependency-groups]
-dev = [
-    "ruff>=0.11.2",
-    "pytest>=8.0.0",
-    "hypothesis>=6.100.0",
-]
+dev = ["ruff>=0.11.2", "pytest>=8.0.0", "hypothesis>=6.100.0"]
 
 [tool.ruff.lint]
 extend-select = [
