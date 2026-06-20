@@ -5,12 +5,12 @@ description = "Process data from F-droid metrics website for analysis"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "requests>=2.34.0",
-    "pandas>=3.0.0",
-    "plotly>=6.7.0",
-    "streamlit==1.56.0", # 1.57.0 has starlette which has ValueErrors on Windows
-    "pyyaml>=6.0.0",
-    "rapidfuzz>=3.14.3",
+    "requests>=2.34.2",
+    "pandas>=3.0.3",
+    "plotly>=6.8.0",
+    "streamlit>=1.58.0", # 1.57.0 has starlette which has ValueErrors on Windows
+    "pyyaml>=6.0.3",
+    "rapidfuzz>=3.14.5",
 ]
 
 [dependency-groups]
