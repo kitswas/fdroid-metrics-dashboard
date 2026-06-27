@@ -196,7 +196,7 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "rapidfuzz", specifier = ">=3.14.5" },
     { name = "requests", specifier = ">=2.34.2" },
-    { name = "streamlit", specifier = "==1.58.0" },
+    { name = "streamlit", specifier = ">=1.58.0" },
 ]
 
 [package.metadata.requires-dev]
