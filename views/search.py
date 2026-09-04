@@ -21,7 +21,7 @@ def get_search_analyzer() -> SearchMetricsAnalyzer:
     return SearchMetricsAnalyzer()
 
 
-@st.cache_data
+@st.cache_data(max_entries=5, ttl=3600)
 def get_time_series_data_cached(
     _analyzer: SearchMetricsAnalyzer, dates: list[str] | None = None
 ) -> pd.DataFrame:

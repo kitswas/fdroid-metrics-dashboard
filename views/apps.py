@@ -39,7 +39,7 @@ def get_metadata_fetcher() -> FDroidMetadataFetcher:
     return FDroidMetadataFetcher(cache_dir="./cache/metadata")
 
 
-@st.cache_data
+@st.cache_data(max_entries=5, ttl=3600)
 def get_all_packages_with_downloads_cached(
     _analyzer: AppMetricsAnalyzer, dates: list[str]
 ) -> pd.DataFrame:
@@ -47,7 +47,7 @@ def get_all_packages_with_downloads_cached(
     return _analyzer.get_all_packages_with_downloads(dates)
 
 
-@st.cache_data
+@st.cache_data(max_entries=5, ttl=3600)
 def get_time_series_data_cached(
     _analyzer: AppMetricsAnalyzer, dates: list[str] | None = None
 ) -> pd.DataFrame:

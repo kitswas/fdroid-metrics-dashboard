@@ -215,3 +215,6 @@ cache/
 # Downloaded data files
 etl/raw/
 downloads/
+
+# Benchmark scripts
+bench_memory.py

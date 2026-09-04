@@ -9,9 +9,9 @@ from dataclasses import dataclass
 class CacheConfig:
     """Cache configuration settings."""
 
-    APP_CACHE_SIZE: int = 100
-    SEARCH_CACHE_SIZE: int = 1000
-    METADATA_CACHE_SIZE: int = 500
+    APP_CACHE_SIZE: int = 50
+    SEARCH_CACHE_SIZE: int = 500
+    METADATA_CACHE_SIZE: int = 250
 
 
 @dataclass(frozen=True)
